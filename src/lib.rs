@@ -14,7 +14,3 @@ mod http;
 
 pub mod eureka_client;
 pub mod model;
-
-#[test]
-fn it_works() {
-}
