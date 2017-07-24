@@ -1,4 +1,5 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
+use std::iter::Iterator;
 
 #[allow(dead_code)]
 pub enum Status {
@@ -164,7 +165,7 @@ mod tests {
            "secureVipAddress": "127.0.0.2",
            "status": "UP",
            "port": 80,
-           "securePort", 443,
+           "securePort": 443,
            "homePageUrl": "http://google.com",
            "statusPageUrl": "http://nytimes.com",
            "healthCheckUrl": "http://washingtonpost.com",
@@ -224,7 +225,7 @@ mod tests {
         };
 
         let result = serde_json::to_string(&instance).unwrap();
-//        assert_eq!(json, result); todo - fix
+        assert_eq!(json, result);
     }
 
 
