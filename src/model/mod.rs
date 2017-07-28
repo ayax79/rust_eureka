@@ -1,30 +1,15 @@
+pub mod status;
+
 use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
 use std::iter::Iterator;
+use std::fmt;
+use std::ops::Add;
+use std::convert::From;
+use std::str::FromStr;
+use self::status::Status;
 
-#[allow(dead_code)]
-pub enum Status {
-    Up,
-    Down,
-    Starting,
-    OutOfService,
-    Unknown
-}
-
-impl Serialize for Status {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
-        let result = match self {
-            &Status::Up => "UP",
-            &Status::Down => "DOWN",
-            &Status::Starting => "STARTING",
-            &Status::OutOfService => "OUT_OF_SERVICE",
-            _ => "UNKNOWN"
-        };
-        serializer.serialize_str(result)
-    }
-}
-
-#[allow(dead_code)]
+#[derive(Debug)]
 pub enum DcName {
     MyOwn,
     Amazon
@@ -42,7 +27,7 @@ impl Serialize for DcName {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub struct AmazonMetaData {
     ami_launch_index: String,
     local_hostname: String,
@@ -76,7 +61,7 @@ impl Serialize for AmazonMetaData {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub struct DataCenterInfo {
     name: DcName,
     metadata: AmazonMetaData
@@ -93,7 +78,7 @@ impl Serialize for DataCenterInfo {
 }
 
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub struct LeaseInfo {
     eviction_duration_in_secs: Option<u32>
 }
@@ -110,7 +95,7 @@ impl Serialize for LeaseInfo {
 }
 
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub struct Instance {
     host_name: String,
     app: String,
@@ -186,9 +171,9 @@ mod tests {
            "leaseInfo": {"evictionDurationInSecs":9600},
            "metadata": ["something"]
         }"#
-        .to_string()
-        .replace(" ", "")
-        .replace("\n", "");
+            .to_string()
+            .replace(" ", "")
+            .replace("\n", "");
 
         let instance = Instance {
             host_name: "Foo".to_string(),

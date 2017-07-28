@@ -1,7 +1,9 @@
-use http::{http_get};
+//use http::http_get;
 use serde_json;
 use serde_json::Value;
 use std::iter::FromIterator;
+use model::Instance;
+use errors::EurekaClientError;
 
 pub struct EurekaClient {
     client_name: String,
@@ -22,10 +24,17 @@ impl EurekaClient {
 
     pub fn get_application_hosts(&self, application_name: &str) -> Vec<String> {
         let uri = self.eureka_cluster_url.clone() + application_name;
-        let response = http_get(self.client_name.as_ref(), uri.as_ref()).unwrap();
-        let json = serde_json::from_str(response.as_ref()).unwrap();
-        self.extract_results(json)
+//        let response = http_get(self.client_name.as_ref(), uri.as_ref()).unwrap();
+//        let json = serde_json::from_str(response.as_ref()).unwrap();
+//        self.extract_results(json)
+
+        vec!["foo".to_string()]
     }
+
+//    pub fn register(instance: &Instance) -> Result<(), EurekaClientError> {
+//
+//
+//    }
 
     fn extract_results(&self, json: Value) -> Vec<String> {
         // filter that can be usd on an instance

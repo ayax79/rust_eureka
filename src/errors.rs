@@ -4,14 +4,16 @@ use std::fmt;
 use std::convert::From;
 use hyper::error::Error as HyperError;
 use serde_json::error::Error as ParserError;
+use hyper::error::UriError;
 
-use self::EurekaClientError::{ClientError, JsonError};
+use self::EurekaClientError::*;
 
 #[derive(Debug)]
 pub enum EurekaClientError {
     ClientError(HyperError),
     JsonError(ParserError),
-    GenericError(String)
+    GenericError(String),
+    InvalidUri(UriError)
 }
 
 impl Error for EurekaClientError {
@@ -44,10 +46,14 @@ impl From<ParserError> for EurekaClientError {
     }
 }
 
-impl Display for EurekaClientError {
+impl From<UriError> for EurekaClientError {
+    fn from(err: UriError) -> EurekaClientError {
+        InvalidUri(err)
+    }
+}
 
+impl Display for EurekaClientError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
     }
-
 }
