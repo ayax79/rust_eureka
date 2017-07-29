@@ -1,8 +1,10 @@
 pub mod status;
 pub mod dcname;
+pub mod amazonmetadata;
 
 pub use self::status::Status;
 pub use self::dcname::DcName;
+pub use self::amazonmetadata::AmazonMetaData;
 
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
@@ -11,40 +13,6 @@ use std::fmt;
 use std::ops::Add;
 use std::convert::From;
 use std::str::FromStr;
-
-#[derive(Debug)]
-pub struct AmazonMetaData {
-    ami_launch_index: String,
-    local_hostname: String,
-    availability_zone: String,
-    instance_id: String,
-    public_ip4: String,
-    public_hostname: String,
-    ami_manifest_path: String,
-    local_ip4: String,
-    hostname: String,
-    ami_id: String,
-    instance_type: String
-}
-
-impl Serialize for AmazonMetaData {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
-        let mut s = serializer.serialize_struct("AmazonMetaData", 11)?;
-        s.serialize_field("ami-launch-index", &self.ami_launch_index)?;
-        s.serialize_field("local-hostname", &self.local_hostname)?;
-        s.serialize_field("availability-zone", &self.availability_zone)?;
-        s.serialize_field("instance-id", &self.instance_id)?;
-        s.serialize_field("public-ipv4", &self.public_ip4)?;
-        s.serialize_field("public-hostname", &self.public_hostname)?;
-        s.serialize_field("ami-manifest-path", &self.ami_manifest_path)?;
-        s.serialize_field("local-ipv4", &self.local_ip4)?;
-        s.serialize_field("hostname", &self.hostname)?;
-        s.serialize_field("ami-id", &self.ami_id)?;
-        s.serialize_field("instance-type", &self.instance_type)?;
-        s.end()
-    }
-}
 
 #[derive(Debug)]
 pub struct DataCenterInfo {
@@ -199,26 +167,6 @@ mod tests {
     }
 
 
-    #[test]
-    fn test_serialize_amazon_meta_data() {
-        let md = AmazonMetaData {
-            ami_launch_index: "001a".to_string(),
-            local_hostname: "localhost0".to_string(),
-            availability_zone: "US_East1a".to_string(),
-            instance_id: "instance1a".to_string(),
-            public_ip4: "32.23.21.212".to_string(),
-            public_hostname: "foo.coma".to_string(),
-            ami_manifest_path: "/dev/nulla".to_string(),
-            local_ip4: "127.0.0.12".to_string(),
-            hostname: "privatefoo.coma".to_string(),
-            ami_id: "ami0023".to_string(),
-            instance_type: "c4xlarged".to_string()
-        };
-        let json = sample_meta_data();
-
-        let result = serde_json::to_string(&md).unwrap();
-        assert_eq!(json, result);
-    }
 
     #[test]
     fn test_serialize_data_center_info() {
