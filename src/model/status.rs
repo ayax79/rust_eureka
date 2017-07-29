@@ -1,10 +1,14 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::ser::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
 use std::iter::Iterator;
 use std::fmt;
-use std::ops::Add;
 use std::convert::From;
-use std::str::FromStr;
+
+const UP: &'static str = "UP";
+const DOWN: &'static str = "DOWN";
+const STARTING: &'static str = "STARTING";
+const OUT_OF_SERVICE: &'static str = "OUT_OF_SERVICE";
+const UNKNOWN: &'static str = "UNKNOWN";
 
 #[derive(Debug, PartialEq)]
 pub enum Status {
@@ -26,10 +30,10 @@ impl<'a> From<&'a str> for Status {
 
     fn from(str: &'a str) -> Self {
         match str {
-            "UP" => Status::Up,
-            "DOWN" => Status::Down,
-            "STARTING" => Status::Starting,
-            "OUT_OF_SERVICE" => Status::OutOfService,
+            UP => Status::Up,
+            DOWN => Status::Down,
+            STARTING => Status::Starting,
+            OUT_OF_SERVICE => Status::OutOfService,
             _ => Status::Unknown
         }
     }
@@ -44,11 +48,11 @@ impl From<String> for Status {
 impl From<Status> for String {
     fn from(s: Status) -> Self {
         match s {
-            Status::Up => "UP".to_string(),
-            Status::Down => "DOWN".to_string(),
-            Status::Starting => "STARTING".to_string(),
-            Status::OutOfService => "OUT_OF_SERVICE".to_string(),
-            _ => "UNKNOWN".to_string()
+            Status::Up => UP.to_string(),
+            Status::Down => DOWN.to_string(),
+            Status::Starting => STARTING.to_string(),
+            Status::OutOfService => OUT_OF_SERVICE.to_string(),
+            _ => UNKNOWN.to_string()
         }
     }
 }
@@ -56,11 +60,11 @@ impl From<Status> for String {
 impl<'a> From<&'a Status> for String {
     fn from(s: &'a Status) -> Self {
         match s {
-            &Status::Up => "UP".to_string(),
-            &Status::Down => "DOWN".to_string(),
-            &Status::Starting => "STARTING".to_string(),
-            &Status::OutOfService => "OUT_OF_SERVICE".to_string(),
-            _ => "UNKNOWN".to_string()
+            &Status::Up => UP.to_string(),
+            &Status::Down => DOWN.to_string(),
+            &Status::Starting => STARTING.to_string(),
+            &Status::OutOfService => OUT_OF_SERVICE.to_string(),
+            _ => UNKNOWN.to_string()
         }
     }
 }
@@ -107,15 +111,14 @@ mod test {
 
     #[test]
     fn test_from_string_ref() {
-        let up = Status::from("UP");
+        let up = Status::from(UP);
         assert_eq!(Status::Up, up);
     }
 
     #[test]
-    fn test_from_string() {       
-        let up = Status::from("UP".to_string());
+    fn test_from_string() {
+        let up = Status::from(UP.to_owned());
         assert_eq!(Status::Up, up);
     }
-
 
 }

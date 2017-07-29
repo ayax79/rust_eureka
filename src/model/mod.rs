@@ -1,4 +1,8 @@
 pub mod status;
+pub mod dcname;
+
+pub use self::status::Status;
+pub use self::dcname::DcName;
 
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
@@ -7,25 +11,6 @@ use std::fmt;
 use std::ops::Add;
 use std::convert::From;
 use std::str::FromStr;
-use self::status::Status;
-
-#[derive(Debug)]
-pub enum DcName {
-    MyOwn,
-    Amazon
-}
-
-impl Serialize for DcName {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
-        let result = match self {
-            &DcName::MyOwn => "MyOwn",
-            &DcName::Amazon => "Amazon"
-        };
-
-        serializer.serialize_str(result)
-    }
-}
 
 #[derive(Debug)]
 pub struct AmazonMetaData {
