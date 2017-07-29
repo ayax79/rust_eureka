@@ -1,10 +1,6 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
-use std::iter::Iterator;
 use std::fmt;
-use std::ops::Add;
-use std::convert::From;
-use std::str::FromStr;
 
 const AMI_LAUNCH_INDEX: &'static str = "ami-launch-index";
 const LOCAL_HOSTNAME: &'static str = "local-hostname";
