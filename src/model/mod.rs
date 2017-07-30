@@ -137,41 +137,5 @@ mod tests {
         assert_eq!(json, result);
     }
 
-    #[test]
-    fn test_lease_info_some() {
-        let li = LeaseInfo { eviction_duration_in_secs: Some(9600) };
-        let json = r#"{"evictionDurationInSecs":9600}"#;
-        let result = serde_json::to_string(&li).unwrap();
-        assert_eq!(json, result);
-    }
-
-    #[test]
-    fn test_lease_info_none() {
-        let li = LeaseInfo { eviction_duration_in_secs: None };
-        let json = r#"{"evictionDurationInSecs":90}"#;
-        let result = serde_json::to_string(&li).unwrap();
-        assert_eq!(json, result);
-    }
-
-    fn sample_meta_data() -> String {
-        r#"{ "ami-launch-index": "001a",
-            "local-hostname": "localhost0",
-            "availability-zone": "US_East1a",
-            "instance-id": "instance1a",
-            "public-ipv4": "32.23.21.212",
-            "public-hostname": "foo.coma",
-            "ami-manifest-path": "/dev/nulla",
-            "local-ipv4": "127.0.0.12",
-            "hostname": "privatefoo.coma",
-            "ami-id": "ami0023",
-            "instance-type": "c4xlarged" }"#
-            .to_string()
-            .replace(" ", "")
-            .replace("\n", "")
-    }
-
-    fn sample_data_center() -> String {
-        format!("{{\"name\":\"Amazon\",\"metadata\":{}}}", sample_meta_data())
-    }
 }
 
