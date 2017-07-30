@@ -106,6 +106,7 @@ impl<'de> Deserialize<'de> for Status {
     }
 }
 
+#[cfg(test)]
 mod test {
     use super::*;
 

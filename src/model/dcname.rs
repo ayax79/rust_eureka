@@ -115,6 +115,7 @@ impl<'de> Deserialize<'de> for DcName {
     }
 }
 
+#[cfg(test)]
 mod test {
     use super::*;
 

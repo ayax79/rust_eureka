@@ -219,7 +219,8 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
     }
 }
 
-mod test {
+#[cfg(test)]
+pub mod test {
     use super::*;
     use serde_json;
 
@@ -264,7 +265,7 @@ mod test {
         assert_eq!(md, result);
     }
 
-    fn sample_meta_data() -> String {
+    pub fn sample_meta_data() -> String {
         r#"{ "ami-launch-index": "001a",
             "local-hostname": "localhost0",
             "availability-zone": "US_East1a",

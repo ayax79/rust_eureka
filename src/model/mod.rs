@@ -1,10 +1,12 @@
-pub mod status;
-pub mod dcname;
-pub mod amazonmetadata;
+mod status;
+mod dcname;
+mod amazonmetadata;
+mod datacenterinfo;
 
 pub use self::status::Status;
 pub use self::dcname::DcName;
 pub use self::amazonmetadata::AmazonMetaData;
+pub use self::datacenterinfo::DataCenterInfo;
 
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
@@ -13,23 +15,6 @@ use std::fmt;
 use std::ops::Add;
 use std::convert::From;
 use std::str::FromStr;
-
-#[derive(Debug)]
-pub struct DataCenterInfo {
-    name: DcName,
-    metadata: AmazonMetaData
-}
-
-impl Serialize for DataCenterInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
-        let mut s = serializer.serialize_struct("DataCenterInfo", 2)?;
-        s.serialize_field("name", &self.name)?;
-        s.serialize_field("metadata", &self.metadata)?;
-        s.end()
-    }
-}
-
 
 #[derive(Debug)]
 pub struct LeaseInfo {
@@ -163,31 +148,6 @@ mod tests {
         };
 
         let result = serde_json::to_string(&instance).unwrap();
-        assert_eq!(json, result);
-    }
-
-
-
-    #[test]
-    fn test_serialize_data_center_info() {
-        let dci = DataCenterInfo {
-            name: DcName::Amazon,
-            metadata: AmazonMetaData {
-                ami_launch_index: "001a".to_string(),
-                local_hostname: "localhost0".to_string(),
-                availability_zone: "US_East1a".to_string(),
-                instance_id: "instance1a".to_string(),
-                public_ip4: "32.23.21.212".to_string(),
-                public_hostname: "foo.coma".to_string(),
-                ami_manifest_path: "/dev/nulla".to_string(),
-                local_ip4: "127.0.0.12".to_string(),
-                hostname: "privatefoo.coma".to_string(),
-                ami_id: "ami0023".to_string(),
-                instance_type: "c4xlarged".to_string()
-            }
-        };
-        let json = sample_data_center();
-        let result = serde_json::to_string(&dci).unwrap();
         assert_eq!(json, result);
     }
 
