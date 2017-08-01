@@ -68,7 +68,7 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
                     type Value = Field;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        formatter.write_str("A AmazonMetaData field (see schema)")
+                        formatter.write_str("An AmazonMetaData field (see schema)")
                     }
 
                     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where

@@ -1,9 +1,10 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
 use std::fmt;
-use super::dcname::DcName;
-use super::amazonmetadata::AmazonMetaData;
+use super::DcName;
+use super::AmazonMetaData;
 
+// Field name constants
 const NAME: &'static str = "name";
 const METADATA: &'static str = "metadata";
 const DATA_CENTER_INFO: &'static str = "DataCenterInfo";
