@@ -1,10 +1,6 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
-use std::iter::Iterator;
 use std::fmt;
-use std::ops::Add;
-use std::convert::From;
-use std::str::FromStr;
 use super::DataCenterInfo;
 use super::LeaseInfo;
 use super::Status;
@@ -15,7 +11,7 @@ const HOST_NAME: &'static str = "hostName";
 const APP: &'static str = "app";
 const IP_ADDR: &'static str = "ipAddr";
 const VIP_ADDRESS: &'static str = "vipAddress";
-const SECURE_VIP_ADDRESS: &'static str = "vipAddress";
+const SECURE_VIP_ADDRESS: &'static str = "secureVipAddress";
 const STATUS: &'static str = "status";
 const PORT: &'static str = "port";
 const SECURE_PORT: &'static str = "securePort";
@@ -32,7 +28,7 @@ const RUST_FIELDS: &'static [&'static str] = &["host_name", "app", "ip_addr", "v
     "status", "port Option", "secure_port", "homepage_url", "status_page_url",
     "health_check_url", "data_center_info", "lease_info", "metadata"];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Instance {
     host_name: String,
     app: String,
@@ -115,6 +111,11 @@ impl<'de> Deserialize<'de> for Instance {
                             PORT => Ok(Field::Port),
                             SECURE_PORT => Ok(Field::SecurePort),
                             HOME_PAGE_URL => Ok(Field::HomepageUrl),
+                            STATUS_PAGE_URL => Ok(Field::StatusPageUrl),
+                            HEALTH_CHECK_URL => Ok(Field::HealthCheckUrl),
+                            DATA_CENTER_INFO => Ok(Field::DataCenterInfo),
+                            LEASE_INFO => Ok(Field::LeaseInfo),
+                            METADATA => Ok(Field::Metadata),
                             _ => Err(DeError::unknown_field(v, JSON_FIELDS))
                         }
                     }
@@ -153,7 +154,7 @@ impl<'de> Deserialize<'de> for Instance {
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::HomepageUrl => {
-                            if maybe_host_name.is_some() {
+                            if maybe_homepage_url.is_some() {
                                 return Err(DeError::duplicate_field(HOME_PAGE_URL));
                             }
                             maybe_homepage_url = Some(map.next_value()?);
@@ -181,60 +182,60 @@ impl<'de> Deserialize<'de> for Instance {
                                 return Err(DeError::duplicate_field(SECURE_VIP_ADDRESS));
                             }
                             maybe_secure_vip_address = Some(map.next_value()?);
-                        },
+                        }
                         Field::Status => {
                             if maybe_status.is_some() {
                                 return Err(DeError::duplicate_field(STATUS));
                             }
-                            maybe_status= Some(map.next_value()?);
-                        },
+                            maybe_status = Some(map.next_value()?);
+                        }
                         Field::Port => {
                             if maybe_port.is_some() {
                                 return Err(DeError::duplicate_field(PORT));
                             }
-                            maybe_port= Some(map.next_value()?);
-                        },
+                            maybe_port = Some(map.next_value()?);
+                        }
                         Field::SecurePort => {
                             if maybe_secure_port.is_some() {
                                 return Err(DeError::duplicate_field(SECURE_PORT));
                             }
-                            maybe_secure_port= Some(map.next_value()?);
-                        },
+                            maybe_secure_port = Some(map.next_value()?);
+                        }
                         Field::StatusPageUrl => {
                             if maybe_status_page_url.is_some() {
                                 return Err(DeError::duplicate_field(STATUS_PAGE_URL));
                             }
-                            maybe_status_page_url= Some(map.next_value()?);
-                        },
+                            maybe_status_page_url = Some(map.next_value()?);
+                        }
                         Field::HealthCheckUrl => {
                             if maybe_health_check_url.is_some() {
                                 return Err(DeError::duplicate_field(HEALTH_CHECK_URL));
                             }
-                            maybe_health_check_url= Some(map.next_value()?);
-                        },
+                            maybe_health_check_url = Some(map.next_value()?);
+                        }
                         Field::DataCenterInfo => {
                             if maybe_data_center_info.is_some() {
                                 return Err(DeError::duplicate_field(DATA_CENTER_INFO));
                             }
-                            maybe_data_center_info= Some(map.next_value()?);
-                        },
+                            maybe_data_center_info = Some(map.next_value()?);
+                        }
                         Field::LeaseInfo => {
                             if maybe_lease_info.is_some() {
                                 return Err(DeError::duplicate_field(LEASE_INFO));
                             }
-                            maybe_lease_info= Some(map.next_value()?);
-                        },
+                            maybe_lease_info = Some(map.next_value()?);
+                        }
                         Field::Metadata => {
                             if maybe_metadata.is_some() {
                                 return Err(DeError::duplicate_field(METADATA));
                             }
-                            maybe_metadata= Some(map.next_value()?);
-                        },
+                            maybe_metadata = Some(map.next_value()?);
+                        }
                         Field::HostName => {
                             if maybe_host_name.is_some() {
                                 return Err(DeError::duplicate_field(HOST_NAME));
                             }
-                            maybe_host_name= Some(map.next_value()?);
+                            maybe_host_name = Some(map.next_value()?);
                         }
                     }
                 }
@@ -245,13 +246,10 @@ impl<'de> Deserialize<'de> for Instance {
                 let vip_address = maybe_vip_address.ok_or_else(|| DeError::missing_field(VIP_ADDRESS));
                 let secure_vip_address = maybe_secure_vip_address.ok_or_else(|| DeError::missing_field(SECURE_VIP_ADDRESS));
                 let status = maybe_status.ok_or_else(|| DeError::missing_field(STATUS));
-                let port = maybe_port.ok_or_else(|| DeError::missing_field(PORT));
-                let secure_port = maybe_secure_port.ok_or_else(|| DeError::missing_field(SECURE_PORT));
                 let homepage_url = maybe_homepage_url.ok_or_else(|| DeError::missing_field(HOME_PAGE_URL));
                 let status_page_url = maybe_status_page_url.ok_or_else(|| DeError::missing_field(STATUS_PAGE_URL));
                 let health_check_url = maybe_health_check_url.ok_or_else(|| DeError::missing_field(HEALTH_CHECK_URL));
                 let data_center_info = maybe_data_center_info.ok_or_else(|| DeError::missing_field(DATA_CENTER_INFO));
-                let lease_info = maybe_lease_info.ok_or_else(|| DeError::missing_field(LEASE_INFO));
                 let metadata = maybe_metadata.ok_or_else(|| DeError::missing_field(METADATA));
 
                 Ok(Instance {
@@ -261,13 +259,13 @@ impl<'de> Deserialize<'de> for Instance {
                     vip_address: vip_address?,
                     secure_vip_address: secure_vip_address?,
                     status: status?,
-                    port: port?,
-                    secure_port: secure_port?,
+                    port: maybe_port,
+                    secure_port: maybe_secure_port,
                     homepage_url: homepage_url?,
                     status_page_url: status_page_url?,
                     health_check_url: health_check_url?,
                     data_center_info: data_center_info?,
-                    lease_info: lease_info?,
+                    lease_info: maybe_lease_info,
                     metadata: metadata?
                 })
             }
@@ -284,8 +282,29 @@ mod tests {
     use super::super::AmazonMetaData;
 
     #[test]
-    fn test_instance() {
-        let json = r#"{
+    fn test_instance_serialization() {
+        let json = build_test_json();
+        let instance = build_test_instance();
+        let result = serde_json::to_string(&instance).unwrap();
+
+        //        let combined = json.chars().zip(result.chars());
+        //        for (a, b) in combined {
+        //            print!("{}", b);
+        //            assert_eq!(a, b);
+        //        }
+        assert_eq!(json, result);
+    }
+
+    #[test]
+    fn test_instance_deserialization() {
+        let json = build_test_json();
+        let instance = build_test_instance();
+        let result = serde_json::from_str(&json).unwrap();
+        assert_eq!(instance, result);
+    }
+
+    fn build_test_json() -> String {
+        r#"{
            "hostName": "Foo",
            "app": "Bar",
            "ipAddr": "3.128.2.12",
@@ -312,13 +331,15 @@ mod tests {
                 "instance-type": "c4xlarged"
            }},
            "leaseInfo": {"evictionDurationInSecs":9600},
-           "metadata": ["something"]
+           "metadata": ["something", "somethingelse"]
         }"#
             .to_string()
             .replace(" ", "")
-            .replace("\n", "");
+            .replace("\n", "")
+    }
 
-        let instance = Instance {
+    fn build_test_instance() -> Instance {
+        Instance {
             host_name: "Foo".to_string(),
             app: "Bar".to_string(),
             ip_addr: "3.128.2.12".to_string(),
@@ -349,11 +370,8 @@ mod tests {
             lease_info: Some(LeaseInfo {
                 eviction_duration_in_secs: Some(9600)
             }),
-            metadata: vec!["something".to_string()]
-        };
-
-        let result = serde_json::to_string(&instance).unwrap();
-        assert_eq!(json, result);
+            metadata: vec!["something".to_string(), "somethingelse".to_string()]
+        }
     }
 }
 

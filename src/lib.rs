@@ -7,7 +7,7 @@ extern crate futures;
 extern crate hyper;
 extern crate tokio_core;
 extern crate url;
-#[macro_use]
+//#[macro_use]
 extern crate log;
 extern crate option_filter;
 
