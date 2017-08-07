@@ -30,20 +30,20 @@ const RUST_FIELDS: &'static [&'static str] = &["host_name", "app", "ip_addr", "v
 
 #[derive(Debug, PartialEq)]
 pub struct Instance {
-    host_name: String,
-    app: String,
-    ip_addr: String,
-    vip_address: String,
-    secure_vip_address: String,
-    status: Status,
-    port: Option<u16>,
-    secure_port: Option<u16>,
-    homepage_url: String,
-    status_page_url: String,
-    health_check_url: String,
-    data_center_info: DataCenterInfo,
-    lease_info: Option<LeaseInfo>,
-    metadata: Vec<String>
+    pub host_name: String,
+    pub app: String,
+    pub ip_addr: String,
+    pub vip_address: String,
+    pub secure_vip_address: String,
+    pub status: Status,
+    pub port: Option<u16>,
+    pub secure_port: Option<u16>,
+    pub homepage_url: String,
+    pub status_page_url: String,
+    pub health_check_url: String,
+    pub data_center_info: DataCenterInfo,
+    pub lease_info: Option<LeaseInfo>,
+    pub metadata: Vec<String>
 }
 
 impl Serialize for Instance {

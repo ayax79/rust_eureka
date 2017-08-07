@@ -25,7 +25,7 @@ impl<'a> EurekaClient<'a> {
         }
     }
 
-    pub fn register(&self, application_id: &str, instance: &Instance) -> impl Future<Item=(), Error=EurekaClientError> {
+    pub fn register(&self, application_id: &str, instance: &Instance) -> Box<Future<Item = (), Error = EurekaClientError>> {
         let client = Client::new(self.handle);
         let path = "/eureka/v2/apps/".to_owned() + application_id;
         let mut req: Request<Body> = Request::new(Method::Post, self.build_uri(path.as_ref()));
@@ -35,21 +35,22 @@ impl<'a> EurekaClient<'a> {
         req.headers_mut().set(ContentLength(json.len() as u64));
         req.set_body(json);
 
-        client.request(req).and_then(|res| {
+        let result = client.request(req).and_then(|res| {
             debug!("get_application_instance: server response status: {}", res.status());
             Ok(())
         }).map_err(|e| {
-            EurekaClientError::ClientError(e)
-        })
+            EurekaClientError::from(e)
+        });
+        Box::new(result)
     }
 
-    pub fn get_application_instances<'b>(&self, application_id: &str) -> impl Future<Item=Vec<Instance>, Error=EurekaClientError> {
+    pub fn get_application_instances<'b>(&self, application_id: &str) -> Box<Future<Item=Vec<Instance>, Error=EurekaClientError>> {
         let client = Client::new(self.handle);
         let path = "/eureka/v2/apps/".to_owned() + application_id;
         let mut req: Request<Body> = Request::new(Method::Get, self.build_uri(path.as_ref()));
         self.set_headers(req.headers_mut());
 
-        client.request(req).and_then(|res| {
+        let result = client.request(req).and_then(|res| {
             debug!("get_application_instance: server response status: {}", res.status());
             res.body().concat2().and_then(move |body| {
                 serde_json::from_slice::<Vec<Instance>>(&body).map_err(|e| {
@@ -57,8 +58,9 @@ impl<'a> EurekaClient<'a> {
                 })
             })
         }).map_err(|e| {
-            EurekaClientError::ClientError(e)
-        })
+            EurekaClientError::from(e)
+        });
+        Box::new(result)
     }
 
     fn build_uri(&self, path: &str) -> Uri {

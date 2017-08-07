@@ -1,7 +1,5 @@
-#![feature(conservative_impl_trait)]
-
-#[macro_use]
-extern crate serde_derive;
+//#[macro_use]
+//extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
@@ -17,3 +15,5 @@ mod errors;
 
 pub mod eureka_client;
 pub mod model;
+
+pub use eureka_client::EurekaClient;

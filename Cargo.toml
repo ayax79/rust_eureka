@@ -1,5 +1,5 @@
 [package]
-name = "eureka"
+name = "rust-eureka"
 version = "0.1.0"
 authors = ["Jack Wright <jack.wright@nike.com>"]
 
@@ -12,8 +12,5 @@ log = "0.3.8"
 option-filter = "1.0.1"
 
 serde = "1.0"
-serde_derive = "1.0"
-
-# serde_json is just for the example, not required in general
 serde_json = "1.0"
 
