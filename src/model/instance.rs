@@ -29,7 +29,7 @@ const RUST_FIELDS: &'static [&'static str] = &["host_name", "app", "ip_addr", "v
     "health_check_url", "data_center_info", "lease_info", "metadata"];
 
 const PORT_DOLLAR: &'static str = "$";
-const PORT_ENABLED: &'static str = "enabled";
+const PORT_ENABLED: &'static str = "@enabled";
 const PORT_FIELDS: &'static [&'static str] = &[PORT_DOLLAR, PORT_ENABLED];
 
 #[derive(Debug, PartialEq)]
@@ -64,8 +64,8 @@ impl Serialize for Port {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
         S: Serializer {
         let mut s = serializer.serialize_struct("Port", 2)?;
-        s.serialize_field("$", &self.port)?;
-        s.serialize_field("enabled", &true)?;
+        s.serialize_field(PORT_DOLLAR, &self.port)?;
+        s.serialize_field(PORT_ENABLED, &true)?;
         s.end()
     }
 }
@@ -411,12 +411,12 @@ mod tests {
            "vipAddress": "127.0.0.1",
            "secureVipAddress": "127.0.0.2",
            "status": "UP",
-           "port": { "$": 80, "enabled": true },
-           "securePort": { "$": 443, "enabled": true },
+           "port": { "$": 80, "@enabled": true },
+           "securePort": { "$": 443, "@enabled": true },
            "homePageUrl": "http://google.com",
            "statusPageUrl": "http://nytimes.com",
            "healthCheckUrl": "http://washingtonpost.com",
-           "dataCenterInfo": {"name":"Amazon","metadata":
+           "dataCenterInfo": { "@class": "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo", "name":"Amazon","metadata":
            {
                 "ami-launch-index": "001a",
                 "local-hostname": "localhost0",
