@@ -152,18 +152,28 @@ impl Serialize for Instance {
         s.serialize_field(SECURE_VIP_ADDRESS, &self.secure_vip_address)?;
         s.serialize_field(STATUS, &self.status)?;
 
-        let maybe_port = &self.port.map(|p| Port::new(p));
-        s.serialize_field(PORT, &maybe_port)?;
+        if let &Some(p) = &self.port {
+            let port = Port::new(p);
+            s.serialize_field(PORT, &port)?;
+        }
 
-        let maybe_port = &self.secure_port.map(|p| Port::new(p));
-        s.serialize_field(SECURE_PORT, &maybe_port)?;
+        if let &Some(p) = &self.secure_port {
+            let port = Port::new(p);
+            s.serialize_field(SECURE_PORT, &port)?;
+        }
 
         s.serialize_field(HOME_PAGE_URL, &self.homepage_url)?;
         s.serialize_field(STATUS_PAGE_URL, &self.status_page_url)?;
         s.serialize_field(HEALTH_CHECK_URL, &self.health_check_url)?;
         s.serialize_field(DATA_CENTER_INFO, &self.data_center_info)?;
-        s.serialize_field(LEASE_INFO, &self.lease_info)?;
-        s.serialize_field(METADATA, &self.metadata)?;
+
+        if let &Some(ref lease_info) = &self.lease_info {
+            s.serialize_field(LEASE_INFO, lease_info)?;
+        }
+
+        if !&self.metadata.is_empty() {
+            s.serialize_field(METADATA, &self.metadata)?;
+        }
         s.end()
     }
 }
