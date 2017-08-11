@@ -2,18 +2,22 @@ extern crate tokio_core;
 extern crate futures;
 extern crate rust_eureka;
 
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate test_logger;
+
 
 use std::env::var;
 use tokio_core::reactor::Core;
 use rust_eureka::EurekaClient;
 use rust_eureka::model::{Instance, Status, DataCenterInfo, DcName, AmazonMetaData};
-use futures::future::Future;
 
 const EUREKA_URI_KEY: &'static str = "EUREKA_URI";
 const EUREKA_CLIENT: &'static str = "integration_test";
 
-#[test]
-pub fn test_register() {
+
+test!(test_register, {
     if let Some(eureka_uri) = get_eureka_uri() {
         let instance = Instance {
             host_name: "localhost".to_owned(),
@@ -51,15 +55,24 @@ pub fn test_register() {
         let handle = core.handle();
         let client = EurekaClient::new(&handle, EUREKA_CLIENT, eureka_uri.as_ref());
         let register = client.register(EUREKA_URI_KEY, &instance);
-//        let query = client.get_application_instances(EUREKA_URI_KEY);
 //        let work = register.join(query);
 //        core.run(work).unwrap();
-        core.run(register).unwrap();
+        let result = core.run(register);
+        println!("result: {:?}", result);
+
+
+        assert!(result.is_ok());
+//        let query = client.get_application_instances(EUREKA_URI_KEY);
+//        let result = core.run(query);
+//        println!("result {:?} ", result);
+//        assert!(result.is_ok());
+
+
     }
     else {
         println!("Skipping test_register as there is no eureka uri specified")
     }
-}
+});
 
 
 fn get_eureka_uri() -> Option<String> {

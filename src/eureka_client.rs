@@ -3,7 +3,7 @@ use futures::{Future, Stream};
 use serde_json;
 use model::Instance;
 use errors::EurekaClientError;
-use hyper::{Client, Method, Request, Body, Uri, mime, Error as HyperError};
+use hyper::{Client, Method, Request, Body, Uri, mime, Error as HyperError, StatusCode};
 use hyper::header::{Accept, AcceptEncoding, Encoding, Headers, UserAgent, ContentType, ContentLength, qitem};
 use tokio_core::reactor::Handle;
 
@@ -18,6 +18,7 @@ pub struct EurekaClient<'a> {
 // Eureka REST API: https://github.com/Netflix/eureka/wiki/Eureka-REST-operations
 impl<'a> EurekaClient<'a> {
     pub fn new(handle: &'a Handle, client_name: &str, eureka_cluster_url: &str) -> EurekaClient<'a> {
+        debug!("Creating new Eureka Client client_name:{:?}, eureka_client:{:?}", client_name, eureka_cluster_url);
         EurekaClient {
             handle: &handle,
             client_name: client_name.to_owned(),
@@ -25,9 +26,10 @@ impl<'a> EurekaClient<'a> {
         }
     }
 
-    pub fn register(&self, application_id: &str, instance: &Instance) -> Box<Future<Item = (), Error = EurekaClientError>> {
+    pub fn register(&self, application_id: &str, instance: &Instance) -> Box<Future<Item=(), Error=EurekaClientError>> {
+        debug!("register: application_id={:?}, instance:{:?}", application_id, instance);
         let client = Client::new(self.handle);
-        let path = "/eureka/v2/apps/".to_owned() + application_id;
+        let path = "/v2/apps/".to_owned() + application_id;
         let mut req: Request<Body> = Request::new(Method::Post, self.build_uri(path.as_ref()));
         self.set_headers(req.headers_mut());
 
@@ -35,18 +37,24 @@ impl<'a> EurekaClient<'a> {
         req.headers_mut().set(ContentLength(json.len() as u64));
         req.set_body(json);
 
-        let result = client.request(req).and_then(|res| {
-            debug!("get_application_instance: server response status: {}", res.status());
-            Ok(())
-        }).map_err(|e| {
+        let result = client.request(req)
+        .map_err(|e| {
             EurekaClientError::from(e)
+        }).and_then(|res| {
+            debug!("register: server response {:?}", res);
+
+            let status = res.status();
+            match status {
+                StatusCode::BadRequest => Err(EurekaClientError::BadRequest),
+                _ => Ok(())
+            }
         });
         Box::new(result)
     }
 
     pub fn get_application_instances<'b>(&self, application_id: &str) -> Box<Future<Item=Vec<Instance>, Error=EurekaClientError>> {
         let client = Client::new(self.handle);
-        let path = "/eureka/v2/apps/".to_owned() + application_id;
+        let path = "/v2/apps/".to_owned() + application_id;
         let mut req: Request<Body> = Request::new(Method::Get, self.build_uri(path.as_ref()));
         self.set_headers(req.headers_mut());
 

@@ -13,7 +13,8 @@ pub enum EurekaClientError {
     ClientError(HyperError),
     JsonError(ParserError),
     GenericError(String),
-    InvalidUri(UriError)
+    InvalidUri(UriError),
+    BadRequest
 }
 
 impl Error for EurekaClientError {
@@ -21,6 +22,7 @@ impl Error for EurekaClientError {
         match *self {
             ClientError(_) => "Error calling downstream client: ",
             JsonError(_) => "A json error occurred ",
+            BadRequest => "Received a 400 (Bad Request) response",
             _ => "Some error occurred"
         }
     }

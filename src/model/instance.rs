@@ -28,6 +28,10 @@ const RUST_FIELDS: &'static [&'static str] = &["host_name", "app", "ip_addr", "v
     "status", "port Option", "secure_port", "homepage_url", "status_page_url",
     "health_check_url", "data_center_info", "lease_info", "metadata"];
 
+const PORT_DOLLAR: &'static str = "$";
+const PORT_ENABLED: &'static str = "enabled";
+const PORT_FIELDS: &'static [&'static str] = &[PORT_DOLLAR, PORT_ENABLED];
+
 #[derive(Debug, PartialEq)]
 pub struct Instance {
     pub host_name: String,
@@ -46,6 +50,97 @@ pub struct Instance {
     pub metadata: Vec<String>
 }
 
+struct Port {
+    port: u16
+}
+
+impl Port {
+    fn new(port: u16) -> Port {
+        Port { port: port }
+    }
+}
+
+impl Serialize for Port {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
+        S: Serializer {
+        let mut s = serializer.serialize_struct("Port", 2)?;
+        s.serialize_field("$", &self.port)?;
+        s.serialize_field("enabled", &true)?;
+        s.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Port {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
+        D: Deserializer<'de> {
+        enum Field { DollarSign, Enabled };
+
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
+                D: Deserializer<'de> {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                        formatter.write_str("'$' or 'enabled'")
+                    }
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
+                        E: DeError, {
+                        match v {
+                            PORT_DOLLAR => Ok(Field::DollarSign),
+                            PORT_ENABLED => Ok(Field::Enabled),
+                            _ => Err(DeError::unknown_field(v, PORT_FIELDS))
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct PortVisitor;
+        impl<'de> Visitor<'de> for PortVisitor {
+            type Value = Port;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Port")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
+                A: MapAccess<'de>, {
+                let mut maybe_dollar: Option<u16> = None;
+                let mut maybe_enabled: Option<bool> = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::DollarSign => {
+                            if maybe_dollar.is_some() {
+                                return Err(DeError::duplicate_field(PORT_DOLLAR));
+                            }
+                            maybe_dollar = Some(map.next_value()?);
+                        }
+                        Field::Enabled => {
+                            if maybe_enabled.is_some() {
+                                return Err(DeError::duplicate_field(PORT_ENABLED));
+                            }
+                            maybe_enabled = Some(map.next_value()?);
+                        }
+                    }
+                }
+
+                let dollar = maybe_dollar.ok_or_else(|| DeError::missing_field(PORT_DOLLAR))?;
+                maybe_enabled.ok_or_else(|| DeError::missing_field(PORT_ENABLED))?;
+                // ignore enabled
+                Ok(Port::new(dollar))
+            }
+        }
+
+        deserializer.deserialize_struct("Port", PORT_FIELDS, PortVisitor)
+    }
+}
+
 impl Serialize for Instance {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
         S: Serializer {
@@ -56,8 +151,13 @@ impl Serialize for Instance {
         s.serialize_field(VIP_ADDRESS, &self.vip_address)?;
         s.serialize_field(SECURE_VIP_ADDRESS, &self.secure_vip_address)?;
         s.serialize_field(STATUS, &self.status)?;
-        s.serialize_field(PORT, &self.port)?;
-        s.serialize_field(SECURE_PORT, &self.secure_port)?;
+
+        let maybe_port = &self.port.map(|p| Port::new(p));
+        s.serialize_field(PORT, &maybe_port)?;
+
+        let maybe_port = &self.secure_port.map(|p| Port::new(p));
+        s.serialize_field(SECURE_PORT, &maybe_port)?;
+
         s.serialize_field(HOME_PAGE_URL, &self.homepage_url)?;
         s.serialize_field(STATUS_PAGE_URL, &self.status_page_url)?;
         s.serialize_field(HEALTH_CHECK_URL, &self.health_check_url)?;
@@ -142,8 +242,8 @@ impl<'de> Deserialize<'de> for Instance {
                 let mut maybe_vip_address = None;
                 let mut maybe_secure_vip_address = None;
                 let mut maybe_status = None;
-                let mut maybe_port = None;
-                let mut maybe_secure_port = None;
+                let mut maybe_port: Option<Port> = None;
+                let mut maybe_secure_port: Option<Port> = None;
                 let mut maybe_homepage_url = None;
                 let mut maybe_status_page_url = None;
                 let mut maybe_health_check_url = None;
@@ -259,8 +359,8 @@ impl<'de> Deserialize<'de> for Instance {
                     vip_address: vip_address?,
                     secure_vip_address: secure_vip_address?,
                     status: status?,
-                    port: maybe_port,
-                    secure_port: maybe_secure_port,
+                    port: maybe_port.map(|p| p.port),
+                    secure_port: maybe_secure_port.map(|p| p.port),
                     homepage_url: homepage_url?,
                     status_page_url: status_page_url?,
                     health_check_url: health_check_url?,
@@ -311,8 +411,8 @@ mod tests {
            "vipAddress": "127.0.0.1",
            "secureVipAddress": "127.0.0.2",
            "status": "UP",
-           "port": 80,
-           "securePort": 443,
+           "port": { "$": 80, "enabled": true },
+           "securePort": { "$": 443, "enabled": true },
            "homePageUrl": "http://google.com",
            "statusPageUrl": "http://nytimes.com",
            "healthCheckUrl": "http://washingtonpost.com",
