@@ -1,7 +1,7 @@
 use std::io;
 use futures::{Future, Stream};
 use serde_json;
-use model::Instance;
+use model::{RegisterRequest, Instance};
 use errors::EurekaClientError;
 use hyper::{Client, Method, Request, Body, Uri, mime, Error as HyperError, StatusCode};
 use hyper::header::{Accept, AcceptEncoding, Encoding, Headers, UserAgent, ContentType, ContentLength, qitem};
@@ -26,14 +26,14 @@ impl<'a> EurekaClient<'a> {
         }
     }
 
-    pub fn register(&self, application_id: &str, instance: &Instance) -> Box<Future<Item=(), Error=EurekaClientError>> {
-        debug!("register: application_id={:?}, instance:{:?}", application_id, instance);
+    pub fn register(&self, application_id: &str, register_request: &RegisterRequest) -> Box<Future<Item=(), Error=EurekaClientError>> {
+        debug!("register: application_id={:?}, register_request:{:?}", application_id, register_request);
         let client = Client::new(self.handle);
         let path = "/v2/apps/".to_owned() + application_id;
         let mut req: Request<Body> = Request::new(Method::Post, self.build_uri(path.as_ref()));
         self.set_headers(req.headers_mut());
 
-        let json = serde_json::to_string(instance).unwrap();
+        let json = serde_json::to_string(register_request).unwrap();
         req.headers_mut().set(ContentLength(json.len() as u64));
         req.set_body(json);
 
@@ -46,6 +46,7 @@ impl<'a> EurekaClient<'a> {
             let status = res.status();
             match status {
                 StatusCode::BadRequest => Err(EurekaClientError::BadRequest),
+                StatusCode::InternalServerError => Err(EurekaClientError::InternalServerError),
                 _ => Ok(())
             }
         });

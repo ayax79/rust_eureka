@@ -385,7 +385,7 @@ impl<'de> Deserialize<'de> for Instance {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use serde_json;
     use super::super::DcName;
@@ -393,7 +393,7 @@ mod tests {
 
     #[test]
     fn test_instance_serialization() {
-        let json = build_test_json();
+        let json = build_test_instance_json();
         let instance = build_test_instance();
         let result = serde_json::to_string(&instance).unwrap();
 
@@ -407,13 +407,13 @@ mod tests {
 
     #[test]
     fn test_instance_deserialization() {
-        let json = build_test_json();
+        let json = build_test_instance_json();
         let instance = build_test_instance();
         let result = serde_json::from_str(&json).unwrap();
         assert_eq!(instance, result);
     }
 
-    fn build_test_json() -> String {
+    pub fn build_test_instance_json() -> String {
         r#"{
            "hostName": "Foo",
            "app": "Bar",
@@ -448,7 +448,7 @@ mod tests {
             .replace("\n", "")
     }
 
-    fn build_test_instance() -> Instance {
+    pub fn build_test_instance() -> Instance {
         Instance {
             host_name: "Foo".to_string(),
             app: "Bar".to_string(),

@@ -14,6 +14,7 @@ pub enum EurekaClientError {
     JsonError(ParserError),
     GenericError(String),
     InvalidUri(UriError),
+    InternalServerError,
     BadRequest
 }
 

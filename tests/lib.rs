@@ -12,7 +12,7 @@ extern crate test_logger;
 use std::env::var;
 use tokio_core::reactor::Core;
 use rust_eureka::EurekaClient;
-use rust_eureka::model::{Instance, Status, DataCenterInfo, DcName, AmazonMetaData};
+use rust_eureka::model::{RegisterRequest, Instance, Status, DataCenterInfo, DcName, AmazonMetaData};
 
 const EUREKA_URI_KEY: &'static str = "EUREKA_URI";
 const EUREKA_CLIENT: &'static str = "integration_test";
@@ -20,24 +20,20 @@ const EUREKA_CLIENT: &'static str = "integration_test";
 
 test!(test_register, {
     if let Some(eureka_uri) = get_eureka_uri() {
-        let instance =  build_test_instance();
+        let request = build_test_register_request();
 
         let mut core = Core::new().unwrap();
         let handle = core.handle();
         let client = EurekaClient::new(&handle, EUREKA_CLIENT, eureka_uri.as_ref());
-        let register = client.register(EUREKA_URI_KEY, &instance);
-//        let work = register.join(query);
-//        core.run(work).unwrap();
+        let register = client.register(EUREKA_URI_KEY, &request);
+
         let result = core.run(register);
         println!("result: {:?}", result);
-
-
         assert!(result.is_ok());
 //        let query = client.get_application_instances(EUREKA_URI_KEY);
 //        let result = core.run(query);
 //        println!("result {:?} ", result);
 //        assert!(result.is_ok());
-
 
     }
     else {
@@ -47,43 +43,45 @@ test!(test_register, {
 
 #[test]
 fn output_json() {
-    let instance = build_test_instance();
-    let json = serde_json::to_string(&instance);
+    let request = build_test_register_request();
+    let json = serde_json::to_string(&request);
     println!("{:?}", json.unwrap());
 }
 
-fn build_test_instance() -> Instance {
-    Instance {
-        host_name: "localhost".to_owned(),
-        app: EUREKA_CLIENT.to_owned(),
-        ip_addr: "127.0.0.1".to_owned(),
-        vip_address: "127.0.0.1".to_owned(),
-        secure_vip_address: "127.0.0.1".to_owned(),
-        status: Status::Up,
-        port: None,
-        secure_port: None,
-        homepage_url: "http://google.com".to_owned(),
-        status_page_url: "http://google.com".to_owned(),
-        health_check_url: "http://google.com".to_owned(),
-        data_center_info: DataCenterInfo {
-            name: DcName::MyOwn,
-            metadata: AmazonMetaData {
-                ami_launch_index: "001".to_owned(),
-                local_hostname: "localhost".to_owned(),
-                availability_zone: "N/A".to_owned(),
-                instance_id: "001".to_owned(),
-                public_ip4: "127.0.0.1".to_owned(),
-                public_hostname: "localhost".to_owned(),
-                ami_manifest_path: "/a/path".to_owned(),
-                local_ip4: "127.0.0.1".to_owned(),
-                hostname: "localhost".to_owned(),
-                ami_id: "232332".to_owned(),
-                instance_type: "SomeType".to_owned()
-            }
-        },
-        lease_info: None,
-        metadata: vec![]
-    }
+
+fn build_test_register_request() -> RegisterRequest {
+    RegisterRequest::new(
+        Instance {
+            host_name: "localhost".to_owned(),
+            app: EUREKA_CLIENT.to_owned(),
+            ip_addr: "127.0.0.1".to_owned(),
+            vip_address: "127.0.0.1".to_owned(),
+            secure_vip_address: "127.0.0.1".to_owned(),
+            status: Status::Up,
+            port: None,
+            secure_port: None,
+            homepage_url: "http://google.com".to_owned(),
+            status_page_url: "http://google.com".to_owned(),
+            health_check_url: "http://google.com".to_owned(),
+            data_center_info: DataCenterInfo {
+                name: DcName::MyOwn,
+                metadata: AmazonMetaData {
+                    ami_launch_index: "001".to_owned(),
+                    local_hostname: "localhost".to_owned(),
+                    availability_zone: "N/A".to_owned(),
+                    instance_id: "001".to_owned(),
+                    public_ip4: "127.0.0.1".to_owned(),
+                    public_hostname: "localhost".to_owned(),
+                    ami_manifest_path: "/a/path".to_owned(),
+                    local_ip4: "127.0.0.1".to_owned(),
+                    hostname: "localhost".to_owned(),
+                    ami_id: "232332".to_owned(),
+                    instance_type: "SomeType".to_owned()
+                }
+            },
+            lease_info: None,
+            metadata: vec![]
+        })
 }
 
 fn get_eureka_uri() -> Option<String> {
