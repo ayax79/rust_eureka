@@ -56,6 +56,24 @@ impl<'a> EurekaClient<'a> {
     }
 
     pub fn get_application_instances<'b>(&self, application_id: &str) -> Box<Future<Item=Vec<Instance>, Error=EurekaClientError>> {
+
+        // Since it was hard to coerce the errot type into a EurekaClientError
+        // I set the result in a holder then map result into an error or ok
+        // There has to be a better way.. but this works.
+        enum IntermediateResult {
+            Ok(Vec<Instance>),
+            Err(EurekaClientError)
+        }
+        impl IntermediateResult {
+            fn ok(vec: Vec<Instance>) -> IntermediateResult {
+                IntermediateResult::Ok(vec)
+            }
+            fn err(err: EurekaClientError) -> IntermediateResult {
+                IntermediateResult::Err(err)
+            }
+        }
+
+
         let client = Client::new(self.handle);
         let path = "/v2/apps/".to_owned() + application_id;
         let mut req: Request<Body> = Request::new(Method::Get, self.build_uri(path.as_ref()));
@@ -66,16 +84,26 @@ impl<'a> EurekaClient<'a> {
             debug!("get_application_instance: server response status: {}", status);
             res.body().concat2().and_then(move |body| {
                 match status {
-                    StatusCode::NotFound => Ok(vec![]),
+                    StatusCode::NotFound => Ok(IntermediateResult::err(EurekaClientError::NotFound)),
                     _ => {
                         serde_json::from_slice::<Vec<Instance>>(&body).map_err(|e| {
                             HyperError::Io(io::Error::new(io::ErrorKind::Other, e))
                         })
+                        .map(|r| IntermediateResult::ok(r))
                     }
                 }
             })
-        }).map_err(|e| {
+        })
+        .map_err(|e| {
             EurekaClientError::from(e)
+        })
+        .and_then(|ir| {
+            // now that we have changed the error to EurekaClientError
+            // we can map our err back in
+            match ir {
+                IntermediateResult::Ok(vec) => Ok(vec),
+                IntermediateResult::Err(err) => Err(err)
+            }
         });
         Box::new(result)
     }
