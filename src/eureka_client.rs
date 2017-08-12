@@ -1,6 +1,5 @@
 use std::io;
 use futures::{Future, Stream};
-use futures::future::{err, ok};
 use serde_json;
 use model::{RegisterRequest, Instance};
 use errors::EurekaClientError;
@@ -64,15 +63,6 @@ impl<'a> EurekaClient<'a> {
             Ok(Vec<Instance>),
             Err(EurekaClientError)
         }
-        impl IntermediateResult {
-            fn ok(vec: Vec<Instance>) -> IntermediateResult {
-                IntermediateResult::Ok(vec)
-            }
-            fn err(err: EurekaClientError) -> IntermediateResult {
-                IntermediateResult::Err(err)
-            }
-        }
-
 
         let client = Client::new(self.handle);
         let path = "/v2/apps/".to_owned() + application_id;
@@ -84,12 +74,12 @@ impl<'a> EurekaClient<'a> {
             debug!("get_application_instance: server response status: {}", status);
             res.body().concat2().and_then(move |body| {
                 match status {
-                    StatusCode::NotFound => Ok(IntermediateResult::err(EurekaClientError::NotFound)),
+                    StatusCode::NotFound => Ok(IntermediateResult::Err(EurekaClientError::NotFound)),
                     _ => {
                         serde_json::from_slice::<Vec<Instance>>(&body).map_err(|e| {
                             HyperError::Io(io::Error::new(io::ErrorKind::Other, e))
                         })
-                        .map(|r| IntermediateResult::ok(r))
+                        .map(|r| IntermediateResult::Ok(r))
                     }
                 }
             })
