@@ -30,10 +30,10 @@ test!(test_register, {
         let result = core.run(register);
         println!("result: {:?}", result);
         assert!(result.is_ok());
-//        let query = client.get_application_instances(EUREKA_URI_KEY);
-//        let result = core.run(query);
-//        println!("result {:?} ", result);
-//        assert!(result.is_ok());
+        let query = client.get_application_instances(EUREKA_URI_KEY);
+        let result = core.run(query);
+        println!("result {:?} ", result);
+        assert!(result.is_ok());
 
     }
     else {

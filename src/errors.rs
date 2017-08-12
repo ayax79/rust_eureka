@@ -15,7 +15,8 @@ pub enum EurekaClientError {
     GenericError(String),
     InvalidUri(UriError),
     InternalServerError,
-    BadRequest
+    BadRequest,
+    NotFound
 }
 
 impl Error for EurekaClientError {

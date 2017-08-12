@@ -1,5 +1,6 @@
 use std::io;
 use futures::{Future, Stream};
+use futures::future::{err, ok};
 use serde_json;
 use model::{RegisterRequest, Instance};
 use errors::EurekaClientError;
@@ -38,18 +39,19 @@ impl<'a> EurekaClient<'a> {
         req.set_body(json);
 
         let result = client.request(req)
-        .map_err(|e| {
-            EurekaClientError::from(e)
-        }).and_then(|res| {
-            debug!("register: server response {:?}", res);
+            .map_err(|e| {
+                EurekaClientError::from(e)
+            })
+            .and_then(|res| {
+                debug!("register: server response {:?}", res);
 
-            let status = res.status();
-            match status {
-                StatusCode::BadRequest => Err(EurekaClientError::BadRequest),
-                StatusCode::InternalServerError => Err(EurekaClientError::InternalServerError),
-                _ => Ok(())
-            }
-        });
+                let status = res.status();
+                match status {
+                    StatusCode::BadRequest => Err(EurekaClientError::BadRequest),
+                    StatusCode::InternalServerError => Err(EurekaClientError::InternalServerError),
+                    _ => Ok(())
+                }
+            });
         Box::new(result)
     }
 
@@ -60,11 +62,17 @@ impl<'a> EurekaClient<'a> {
         self.set_headers(req.headers_mut());
 
         let result = client.request(req).and_then(|res| {
-            debug!("get_application_instance: server response status: {}", res.status());
+            let status = res.status();
+            debug!("get_application_instance: server response status: {}", status);
             res.body().concat2().and_then(move |body| {
-                serde_json::from_slice::<Vec<Instance>>(&body).map_err(|e| {
-                    HyperError::Io(io::Error::new(io::ErrorKind::Other, e))
-                })
+                match status {
+                    StatusCode::NotFound => Ok(vec![]),
+                    _ => {
+                        serde_json::from_slice::<Vec<Instance>>(&body).map_err(|e| {
+                            HyperError::Io(io::Error::new(io::ErrorKind::Other, e))
+                        })
+                    }
+                }
             })
         }).map_err(|e| {
             EurekaClientError::from(e)
