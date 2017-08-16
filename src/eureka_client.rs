@@ -1,11 +1,13 @@
 use std::io;
 use futures::{Future, Stream};
 use serde_json;
-use model::{RegisterRequest, Instance};
+use request::{RegisterRequest};
+use response::ApplicationResponse;
 use errors::EurekaClientError;
 use hyper::{Client, Method, Request, Body, Uri, mime, Error as HyperError, StatusCode};
 use hyper::header::{Accept, AcceptEncoding, Encoding, Headers, UserAgent, ContentType, ContentLength, qitem};
 use tokio_core::reactor::Handle;
+use serde_json::{Map, Value};
 
 pub struct EurekaClient<'a> {
     handle: &'a Handle,
@@ -54,13 +56,13 @@ impl<'a> EurekaClient<'a> {
         Box::new(result)
     }
 
-    pub fn get_application_instances<'b>(&self, application_id: &str) -> Box<Future<Item=Vec<Instance>, Error=EurekaClientError>> {
+    pub fn get_application_instances<'b>(&self, application_id: &str) -> Box<Future<Item=ApplicationResponse, Error=EurekaClientError>> {
 
         // Since it was hard to coerce the errot type into a EurekaClientError
         // I set the result in a holder then map result into an error or ok
         // There has to be a better way.. but this works.
         enum IntermediateResult {
-            Ok(Vec<Instance>),
+            Ok(ApplicationResponse),
             Err(EurekaClientError)
         }
 
@@ -71,12 +73,14 @@ impl<'a> EurekaClient<'a> {
 
         let result = client.request(req).and_then(|res| {
             let status = res.status();
-            debug!("get_application_instance: server response status: {}", status);
+            debug!("get_application_instances: server response {:?}", res);
             res.body().concat2().and_then(move |body| {
                 match status {
                     StatusCode::NotFound => Ok(IntermediateResult::Err(EurekaClientError::NotFound)),
                     _ => {
-                        serde_json::from_slice::<Vec<Instance>>(&body).map_err(|e| {
+                        let body_as_string: Map<String, Value> = serde_json::from_slice(&body).unwrap();
+                        debug!("body: {:?}", body_as_string);
+                        serde_json::from_slice::<ApplicationResponse>(&body).map_err(|e| {
                             HyperError::Io(io::Error::new(io::ErrorKind::Other, e))
                         })
                         .map(|r| IntermediateResult::Ok(r))
@@ -91,7 +95,7 @@ impl<'a> EurekaClient<'a> {
             // now that we have changed the error to EurekaClientError
             // we can map our err back in
             match ir {
-                IntermediateResult::Ok(vec) => Ok(vec),
+                IntermediateResult::Ok(app) => Ok(app),
                 IntermediateResult::Err(err) => Err(err)
             }
         });

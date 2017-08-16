@@ -13,9 +13,10 @@ use std::env::var;
 use tokio_core::reactor::Core;
 use rust_eureka::EurekaClient;
 use rust_eureka::model::{RegisterRequest, Instance, Status, DataCenterInfo, DcName, AmazonMetaData};
+use serde_json::Map;
 
 const EUREKA_URI_KEY: &'static str = "EUREKA_URI";
-const EUREKA_CLIENT: &'static str = "integration_test";
+const EUREKA_CLIENT: &'static str = "INTEGRATION_TEST";
 
 
 test!(test_register, {
@@ -30,7 +31,7 @@ test!(test_register, {
         let result = core.run(register);
         println!("result: {:?}", result);
         assert!(result.is_ok());
-        let query = client.get_application_instances(EUREKA_URI_KEY);
+        let query = client.get_application_instances(EUREKA_CLIENT);
         let result = core.run(query);
         println!("result {:?} ", result);
         assert!(result.is_ok());
@@ -80,7 +81,9 @@ fn build_test_register_request() -> RegisterRequest {
                 }
             },
             lease_info: None,
-            metadata: vec![]
+            metadata: Map::new(),
+            overriddenstatus: None,
+            country_id: None
         })
 }
 

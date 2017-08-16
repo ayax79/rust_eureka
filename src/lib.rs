@@ -14,6 +14,7 @@ extern crate option_filter;
 mod errors;
 
 pub mod eureka_client;
-pub mod model;
+pub mod request;
+pub mod response;
 
 pub use eureka_client::EurekaClient;
