@@ -16,7 +16,7 @@ const FIELDS: &'static [&'static str] = &[CLASS, NAME, METADATA];
 #[derive(Debug, PartialEq)]
 pub struct DataCenterInfo {
     pub name: DcName,
-    pub metadata: AmazonMetaData
+    pub metadata: Option<AmazonMetaData>
 }
 
 impl Serialize for DataCenterInfo {
@@ -96,11 +96,10 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
                     }
                 }
                 let name = maybe_name.ok_or_else(|| DeError::missing_field(NAME));
-                let metadata = maybe_metadata.ok_or_else(|| DeError::missing_field(METADATA));
                 debug!("Found ignored field @class {:?} ?", maybe_class);
                 Ok(DataCenterInfo {
                     name: name?,
-                    metadata: metadata?
+                    metadata: maybe_metadata
                 })
             }
         }
@@ -112,25 +111,25 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
 pub mod test {
     use super::*;
     use serde_json;
-    use super::super::amazonmetadata::test::sample_meta_data;
+    use super::super::amazonmetadata::tests::sample_meta_data;
 
     #[test]
     fn test_serialize_data_center_info() {
         let dci = DataCenterInfo {
             name: DcName::Amazon,
-            metadata: AmazonMetaData {
+            metadata: Some(AmazonMetaData {
                 ami_launch_index: "001a".to_string(),
                 local_hostname: "localhost0".to_string(),
                 availability_zone: "US_East1a".to_string(),
                 instance_id: "instance1a".to_string(),
-                public_ip4: "32.23.21.212".to_string(),
+                public_ipv4: "32.23.21.212".to_string(),
                 public_hostname: "foo.coma".to_string(),
                 ami_manifest_path: "/dev/nulla".to_string(),
-                local_ip4: "127.0.0.12".to_string(),
+                local_ipv4: "127.0.0.12".to_string(),
                 hostname: "privatefoo.coma".to_string(),
                 ami_id: "ami0023".to_string(),
                 instance_type: "c4xlarged".to_string()
-            }
+            })
         };
         let json = sample_data_center();
         let result = serde_json::to_string(&dci).unwrap();
@@ -141,19 +140,19 @@ pub mod test {
     fn test_deserialize_data_center_info() {
         let dci = DataCenterInfo {
             name: DcName::Amazon,
-            metadata: AmazonMetaData {
+            metadata: Some(AmazonMetaData {
                 ami_launch_index: "001a".to_string(),
                 local_hostname: "localhost0".to_string(),
                 availability_zone: "US_East1a".to_string(),
                 instance_id: "instance1a".to_string(),
-                public_ip4: "32.23.21.212".to_string(),
+                public_ipv4: "32.23.21.212".to_string(),
                 public_hostname: "foo.coma".to_string(),
                 ami_manifest_path: "/dev/nulla".to_string(),
-                local_ip4: "127.0.0.12".to_string(),
+                local_ipv4: "127.0.0.12".to_string(),
                 hostname: "privatefoo.coma".to_string(),
                 ami_id: "ami0023".to_string(),
                 instance_type: "c4xlarged".to_string()
-            }
+            })
         };
         let json = sample_data_center();
         println!("json {}", json);

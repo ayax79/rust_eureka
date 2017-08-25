@@ -51,9 +51,7 @@ pub struct Instance {
     pub health_check_url: String,
     pub data_center_info: DataCenterInfo,
     pub lease_info: Option<LeaseInfo>,
-    pub metadata: Map<String, Value>,
-    pub overriddenstatus: Option<String>,
-    pub country_id: Option<u16>
+    pub metadata: Map<String, Value>
 }
 
 struct Port {
@@ -183,14 +181,6 @@ impl Serialize for Instance {
             s.serialize_field(METADATA, &self.metadata)?;
         }
 
-        if let &Some(ref overridenstatus) = &self.overriddenstatus {
-            s.serialize_field(OVERRIDDENSTATUS, overridenstatus)?;
-        }
-
-        if let &Some(ref country_id) = &self.country_id {
-            s.serialize_field(COUNTRY_ID, country_id)?;
-        }
-
         s.end()
     }
 }
@@ -212,9 +202,7 @@ impl<'de> Deserialize<'de> for Instance {
             HealthCheckUrl,
             DataCenterInfo,
             LeaseInfo,
-            Metadata,
-            Overriddenstatus,
-            CountryId
+            Metadata
         }
 
         impl<'de> Deserialize<'de> for Field {
@@ -245,8 +233,6 @@ impl<'de> Deserialize<'de> for Instance {
                             DATA_CENTER_INFO => Ok(Field::DataCenterInfo),
                             LEASE_INFO => Ok(Field::LeaseInfo),
                             METADATA => Ok(Field::Metadata),
-                            OVERRIDDENSTATUS => Ok(Field::Overriddenstatus),
-                            COUNTRY_ID => Ok(Field::CountryId),
                             _ => Err(DeError::unknown_field(v, JSON_FIELDS))
                         }
                     }
@@ -281,8 +267,6 @@ impl<'de> Deserialize<'de> for Instance {
                 let mut maybe_data_center_info = None;
                 let mut maybe_lease_info = None;
                 let mut maybe_metadata = None;
-                let mut maybe_overriddenstatus = None;
-                let mut maybe_country_id = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -369,20 +353,7 @@ impl<'de> Deserialize<'de> for Instance {
                                 return Err(DeError::duplicate_field(HOST_NAME));
                             }
                             maybe_host_name = Some(map.next_value()?);
-                        },
-                        Field::Overriddenstatus => {
-                            if maybe_overriddenstatus.is_some() {
-                                return Err(DeError::duplicate_field(OVERRIDDENSTATUS));
-                            }
-                            maybe_overriddenstatus = Some(map.next_value()?);
-                        },
-                        Field::CountryId => {
-                            if maybe_country_id.is_some() {
-                                return Err(DeError::duplicate_field(COUNTRY_ID));
-                            }
-                            maybe_country_id = Some(map.next_value()?);
                         }
-
                     }
                 }
 
@@ -413,8 +384,6 @@ impl<'de> Deserialize<'de> for Instance {
                     data_center_info: data_center_info?,
                     lease_info: maybe_lease_info,
                     metadata: metadata,
-                    overriddenstatus: maybe_overriddenstatus,
-                    country_id: maybe_country_id
                 })
             }
         }
@@ -503,7 +472,7 @@ pub mod tests {
             health_check_url: "http://washingtonpost.com".to_string(),
             data_center_info: DataCenterInfo {
                 name: DcName::Amazon,
-                metadata: AmazonMetaData {
+                metadata: Some(AmazonMetaData {
                     ami_launch_index: "001a".to_string(),
                     local_hostname: "localhost0".to_string(),
                     availability_zone: "US_East1a".to_string(),
@@ -515,7 +484,7 @@ pub mod tests {
                     hostname: "privatefoo.coma".to_string(),
                     ami_id: "ami0023".to_string(),
                     instance_type: "c4xlarged".to_string()
-                }
+                })
             },
             lease_info: Some(LeaseInfo {
                 eviction_duration_in_secs: Some(9600)

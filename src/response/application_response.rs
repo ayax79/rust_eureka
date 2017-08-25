@@ -128,7 +128,7 @@ mod tests {
 
     fn build_register_json() -> String {
 
-        format!("{{\"application\":{{\"instance\":{}}}}}", build_test_instance_json())
+        format!("{{\"application\":{{\"name\":\"test_app\",\"instance\":{}}}}}", build_test_instance_json())
     }
 }
 

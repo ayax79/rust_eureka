@@ -1,117 +1,58 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
-use std::fmt;
-
-const LEASE_INFO: &'static str = "LeaseInfo";
-const EVICTION_DURATION_IN_SECS: &'static str = "evictionDurationInSecs";
-const FIELDS: &'static [&'static str] = &[EVICTION_DURATION_IN_SECS];
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LeaseInfo {
-    pub eviction_duration_in_secs: Option<u32>
-}
-
-impl Serialize for LeaseInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
-        let mut s = serializer.serialize_struct(LEASE_INFO, 1)?;
-        // if not specified we will serialize the default of 90
-        let result = self.eviction_duration_in_secs.unwrap_or(90);
-        s.serialize_field(EVICTION_DURATION_IN_SECS, &result)?;
-        s.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for LeaseInfo {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
-        enum Field { EvictionDurationInSecs };
-
-        impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-                D: Deserializer<'de> {
-                struct FieldVisitor;
-
-                impl<'de> Visitor<'de> for FieldVisitor {
-                    type Value = Field;
-
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        formatter.write_str("Expecting eviction_duration_in_secs")
-                    }
-
-                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                        E: DeError {
-
-                        match v {
-                            EVICTION_DURATION_IN_SECS => Ok(Field::EvictionDurationInSecs),
-                            _ => Err(DeError::unknown_field(v, FIELDS))
-                        }
-                    }
-
-                }
-                deserializer.deserialize_identifier(FieldVisitor)
-            }
-        }
-
-        struct LeaseInfoVisitor;
-
-        impl<'de> Visitor<'de> for LeaseInfoVisitor {
-            type Value = LeaseInfo;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("struct LeaseInfoVisitor")
-            }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
-                A: MapAccess<'de> {
-                let mut maybe_eviction_duration = None;
-
-                while let Some(key) = map.next_key()? {
-                    match key {
-                        Field::EvictionDurationInSecs => {
-                            if maybe_eviction_duration.is_some() {
-                                return Err(DeError::duplicate_field(EVICTION_DURATION_IN_SECS));
-                            }
-                            maybe_eviction_duration = Some(map.next_value()?);
-                        }
-                    }
-                }
-                Ok(LeaseInfo{
-                    eviction_duration_in_secs: maybe_eviction_duration
-                })
-            }
-        }
-
-        deserializer.deserialize_struct(LEASE_INFO, FIELDS, LeaseInfoVisitor)
-    }
+    pub renewal_interval_in_secs: i64,
+    pub duration_in_secs: i64,
+    pub registration_timestamp: i64,
+    pub last_renewal_timestamp: i64,
+    pub eviction_timestamp: i64,
+    pub service_up_timestamp: i64
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use serde_json;
 
     #[test]
-    fn test_lease_info_some() {
-        let li = LeaseInfo { eviction_duration_in_secs: Some(9600) };
-        let json = r#"{"evictionDurationInSecs":9600}"#;
+    fn test_serialize(){
+        let li = build_lease_info();
+        let json = build_lease_info_json();
         let result = serde_json::to_string(&li).unwrap();
         assert_eq!(json, result);
     }
 
     #[test]
-    fn test_lease_info_none() {
-        let li = LeaseInfo { eviction_duration_in_secs: None };
-        let json = r#"{"evictionDurationInSecs":90}"#;
-        let result = serde_json::to_string(&li).unwrap();
-        assert_eq!(json, result);
-    }
-
-    #[test]
-    fn test_deserialize_lease_info_some() {
-        let li = LeaseInfo { eviction_duration_in_secs: Some(90) };
-        let json = r#"{"evictionDurationInSecs":90}"#;
-        let result = serde_json::from_str(&json).unwrap();
+    fn test_deserialize() {
+        let li = build_lease_info();
+        let json = build_lease_info_json();
+        let result = serde_json::from_str(json.as_ref()).unwrap();
         assert_eq!(li, result);
     }
 
+
+    fn build_lease_info_json() -> String {
+        r#"{
+            "renewalIntervalInSecs": 30,
+            "durationInSecs": 90,
+            "registrationTimestamp": 1503442035871,
+            "lastRenewalTimestamp": 1503442035871,
+            "evictionTimestamp": 0,
+            "serviceUpTimestamp": 1503442035721
+        }"#
+            .to_string()
+            .replace(" ", "")
+            .replace("\n", "")
+    }
+
+    fn build_lease_info() -> LeaseInfo {
+        LeaseInfo {
+            renewal_interval_in_secs: 30,
+            duration_in_secs: 90,
+            registration_timestamp: 1503442035871,
+            last_renewal_timestamp: 1503442035871,
+            eviction_timestamp: 0,
+            service_up_timestamp: 1503442035721,
+        }
+    }
 }

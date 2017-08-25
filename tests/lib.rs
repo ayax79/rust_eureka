@@ -3,8 +3,8 @@ extern crate futures;
 extern crate rust_eureka;
 extern crate serde_json;
 
-#[macro_use]
-extern crate log;
+//#[macro_use]
+//extern crate log;
 #[macro_use]
 extern crate test_logger;
 
@@ -12,8 +12,10 @@ extern crate test_logger;
 use std::env::var;
 use tokio_core::reactor::Core;
 use rust_eureka::EurekaClient;
-use rust_eureka::model::{RegisterRequest, Instance, Status, DataCenterInfo, DcName, AmazonMetaData};
+use rust_eureka::request::{RegisterRequest, Instance, Status, DataCenterInfo, DcName, AmazonMetaData};
 use serde_json::Map;
+use std::{thread, time};
+
 
 const EUREKA_URI_KEY: &'static str = "EUREKA_URI";
 const EUREKA_CLIENT: &'static str = "INTEGRATION_TEST";
@@ -27,6 +29,10 @@ test!(test_register, {
         let handle = core.handle();
         let client = EurekaClient::new(&handle, EUREKA_CLIENT, eureka_uri.as_ref());
         let register = client.register(EUREKA_URI_KEY, &request);
+        
+        let ten_secs = time::Duration::from_secs(10);
+
+        thread::sleep(ten_secs);
 
         let result = core.run(register);
         println!("result: {:?}", result);
@@ -66,7 +72,7 @@ fn build_test_register_request() -> RegisterRequest {
             health_check_url: "http://google.com".to_owned(),
             data_center_info: DataCenterInfo {
                 name: DcName::MyOwn,
-                metadata: AmazonMetaData {
+                metadata: Some(AmazonMetaData {
                     ami_launch_index: "001".to_owned(),
                     local_hostname: "localhost".to_owned(),
                     availability_zone: "N/A".to_owned(),
@@ -78,12 +84,10 @@ fn build_test_register_request() -> RegisterRequest {
                     hostname: "localhost".to_owned(),
                     ami_id: "232332".to_owned(),
                     instance_type: "SomeType".to_owned()
-                }
+                })
             },
             lease_info: None,
-            metadata: Map::new(),
-            overriddenstatus: None,
-            country_id: None
+            metadata: Map::new()
         })
 }
 
