@@ -1,8 +1,6 @@
 use super::Application;
 use serde::de::{self, Deserialize, Deserializer, Visitor, MapAccess, SeqAccess};
-use serde_json::Value;
 use std::convert::From;
-use std::marker::PhantomData;
 use std::fmt;
 
 
@@ -24,7 +22,7 @@ impl From<Application> for Vec<Application> {
 
 fn deserialize_applications_field<'de, D>(de: D) -> Result<Vec<Application>, D::Error>
     where D: Deserializer<'de> {
-    struct ApplicationOrVec(PhantomData<Vec<Application>>);
+    struct ApplicationOrVec;
 
     impl<'de> Visitor<'de> for ApplicationOrVec {
         type Value = Vec<Application>;
@@ -45,7 +43,7 @@ fn deserialize_applications_field<'de, D>(de: D) -> Result<Vec<Application>, D::
         }
     }
 
-    de.deserialize_any(ApplicationOrVec(PhantomData))
+    de.deserialize_any(ApplicationOrVec)
 }
 
 #[cfg(test)]
