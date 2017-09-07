@@ -1,10 +1,11 @@
 use super::Application;
 use serde::de::{self, Deserialize, Deserializer, Visitor, MapAccess, SeqAccess};
+use serde::ser::{Serialize, Serializer, SerializeStruct};
 use std::convert::From;
 use std::fmt;
 
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 pub struct Applications {
     #[serde(rename = "versions__delta")]
     pub versions_delta: i16,
@@ -12,6 +13,23 @@ pub struct Applications {
     pub apps_hashcode: String,
     #[serde(rename = "application", deserialize_with = "deserialize_applications_field")]
     pub applications: Vec<Application>
+}
+
+
+impl Serialize for Applications {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
+        S: Serializer {
+        let mut s = serializer.serialize_struct("Applications", 3)?;
+        s.serialize_field("versions__delta", &self.versions_delta)?;
+        s.serialize_field("apps__hashcode", &self.apps_hashcode)?;
+
+        if self.applications.len() == 1 {
+            s.serialize_field("application", &self.applications.get(0))?;
+        } else if !self.applications.is_empty() {
+            s.serialize_field("application", &self.applications)?;
+        }
+        s.end()
+    }
 }
 
 impl From<Application> for Vec<Application> {
@@ -58,20 +76,13 @@ mod tests {
     use super::super::LeaseInfo;
     use super::super::ActionType;
 
-//    #[test]
-//    fn test_applications_serialize() {
-//        println!("hihihi");
-//        let json = build_test_applications_json();
-//        let applications = build_test_applications();
-//        let result = serde_json::to_string(&applications).unwrap();
-//
-//        let combined = json.chars().zip(result.chars());
-//        for (a, b) in combined {
-//            print!("{}", b);
-//            assert_eq!(a, b);
-//        }
-//        //        assert_eq!(json, result);
-//    }
+    #[test]
+    fn test_applications_serialize() {
+        let applications = build_test_applications();
+        let result = serde_json::to_string(&applications).unwrap();
+        assert!(result.contains("\"apps__hashcode\":\"UP_1_\""));
+        assert!(result.contains("\"name\":\"INTEGRATION_TEST\""));
+    }
 
     #[test]
     fn test_applications_deserialize() {
