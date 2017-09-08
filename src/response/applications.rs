@@ -65,7 +65,7 @@ fn deserialize_applications_field<'de, D>(de: D) -> Result<Vec<Application>, D::
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use serde_json::{self, Map};
     use super::*;
     use super::super::Application;

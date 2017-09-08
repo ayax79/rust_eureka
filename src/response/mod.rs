@@ -6,6 +6,7 @@ mod leaseinfo;
 mod instance;
 mod application;
 mod application_response;
+mod applications_response;
 mod applications;
 mod action_type;
 
@@ -19,3 +20,4 @@ pub use self::application::Application;
 pub use self::action_type::ActionType;
 pub use self::applications::Applications;
 pub use self::application_response::ApplicationResponse;
+pub use self::applications_response::ApplicationsResponse;

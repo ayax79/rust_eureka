@@ -20,7 +20,7 @@ mod tests {
     use super::super::instance::tests::{build_test_instance, build_test_instance_json};
 
     #[test]
-    fn test_instance_serialization() {
+    fn test_application_response_serialization() {
         let json = build_application_response_json();
         let instance = build_test_instance();
         let application: Application = Application {
@@ -39,7 +39,7 @@ mod tests {
     }
 
     #[test]
-    fn test_instance_deserialization() {
+    fn test_application_response_deserialization() {
         let json = build_application_response_json();
         let instance = build_test_instance();
         let application: Application = Application {
