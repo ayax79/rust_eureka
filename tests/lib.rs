@@ -28,16 +28,24 @@ test!(test_register, {
         let mut core = Core::new().unwrap();
         let handle = core.handle();
         let client = EurekaClient::new(&handle, EUREKA_CLIENT, eureka_uri.as_ref());
+
+        println!("#### Registering");
         let register = client.register(EUREKA_URI_KEY, &request);
-        
-        let ten_secs = time::Duration::from_secs(10);
-
-        thread::sleep(ten_secs);
-
         let result = core.run(register);
         println!("result: {:?}", result);
         assert!(result.is_ok());
-        let query = client.get_application_instances(EUREKA_CLIENT);
+
+        let ten_secs = time::Duration::from_secs(10);
+        thread::sleep(ten_secs);
+
+        println!("#### Querying single application");
+        let query = client.get_application(EUREKA_CLIENT);
+        let result = core.run(query);
+        println!("result {:?} ", result);
+        assert!(result.is_ok());
+
+        println!("#### Querying multiple applications");
+        let query = client.get_applications();
         let result = core.run(query);
         println!("result {:?} ", result);
         assert!(result.is_ok());
