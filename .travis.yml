@@ -1,0 +1,23 @@
+language: rust
+sudo: false
+dist: trusty
+matrix:
+    fast_finish: true
+    include:
+        - rust: stable
+        - rust: 1.20.0
+
+cache:
+    apt: true
+    directories:
+        - target/debug/deps
+        - target/debug/build
+
+addons:
+  apt:
+    packages:
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - binutils-dev
+      - libiberty-dev
