@@ -8,6 +8,7 @@ use hyper::{Client, Method, Request, Body, Uri, mime, Error as HyperError, Statu
 use hyper::header::{Accept, AcceptEncoding, Encoding, Headers, UserAgent, ContentType, ContentLength, AcceptCharset, Charset, qitem};
 use tokio_core::reactor::Handle;
 
+/// A client for accessing Eureka
 pub struct EurekaClient<'a> {
     handle: &'a Handle,
     client_name: String,
@@ -18,6 +19,14 @@ pub struct EurekaClient<'a> {
 // A simple port of the example found at: https://github.com/Netflix/eureka/wiki/Example-Custom-ReadOnly-client
 // Eureka REST API: https://github.com/Netflix/eureka/wiki/Eureka-REST-operations
 impl<'a> EurekaClient<'a> {
+
+    /// Creates a new instance of EurekaClient
+    ///
+    /// # Arguments
+    ///
+    /// * `handle` - a Tokio Core handle
+    /// * `client_name` - The name of this client
+    /// * `eureka_cluster_url` - The base url to the eureka cluster
     pub fn new(handle: &'a Handle, client_name: &str, eureka_cluster_url: &str) -> EurekaClient<'a> {
         debug!("Creating new Eureka Client client_name:{:?}, eureka_client:{:?}", client_name, eureka_cluster_url);
         EurekaClient {

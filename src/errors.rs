@@ -8,14 +8,22 @@ use hyper::error::UriError;
 
 use self::EurekaClientError::*;
 
+/// Errors that can be returned by the [EurekaClient](struct.EurekaClient.html)
 #[derive(Debug)]
 pub enum EurekaClientError {
+    /// An underlying error occurred with the Hyper http client
     ClientError(HyperError),
+    /// An error occurred parsing a response from the server
     JsonError(ParserError),
+    /// A generic error that was no otherwise typed occurred
     GenericError(String),
+    /// The Uri of the Eureka server was invalid
     InvalidUri(UriError),
+    /// An server error occurred with Eureka
     InternalServerError,
+    /// Request parameters sent to Eureka were invalid
     BadRequest,
+    /// The specified resource does not exist in eureka, such as an invalid application name
     NotFound
 }
 
