@@ -1,7 +1,9 @@
 [package]
 name = "rust-eureka"
 version = "0.1.0"
-authors = ["Jack Wright <jack.wright@nike.com>"]
+authors = ["Jack Wright <ayax79@gmail.com>"]
+description = "Simple Netflix Eureka Client"
+license="MIT"
 
 [dependencies]
 futures = "0.1"
