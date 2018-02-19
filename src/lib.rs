@@ -11,8 +11,7 @@ extern crate url;
 extern crate log;
 extern crate option_filter;
 
-mod errors;
-
+pub mod errors;
 pub mod eureka_client;
 pub mod request;
 pub mod response;
