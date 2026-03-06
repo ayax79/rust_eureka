@@ -1,40 +1,71 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
-use serde_json::{Map, Value};
-use std::fmt;
-use std::str::FromStr;
 use super::DataCenterInfo;
 use super::LeaseInfo;
 use super::Status;
+use serde::de::{Deserialize, Deserializer, Error as DeError, MapAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+use serde_json::{Map, Value};
+use std::fmt;
+use std::str::FromStr;
 
 // Field name constants
-const INSTANCE: &'static str = "Instance";
-const HOST_NAME: &'static str = "hostName";
-const APP: &'static str = "app";
-const IP_ADDR: &'static str = "ipAddr";
-const VIP_ADDRESS: &'static str = "vipAddress";
-const SECURE_VIP_ADDRESS: &'static str = "secureVipAddress";
-const STATUS: &'static str = "status";
-const PORT: &'static str = "port";
-const SECURE_PORT: &'static str = "securePort";
-const HOME_PAGE_URL: &'static str = "homePageUrl";
-const STATUS_PAGE_URL: &'static str = "statusPageUrl";
-const HEALTH_CHECK_URL: &'static str = "healthCheckUrl";
-const DATA_CENTER_INFO: &'static str = "dataCenterInfo";
-const LEASE_INFO: &'static str = "leaseInfo";
-const METADATA: &'static str = "metadata";
-const OVERRIDDENSTATUS: &'static str = "overriddenstatus";
-const COUNTRY_ID: &'static str = "countryId";
-const JSON_FIELDS: &'static [&'static str] = &[INSTANCE, HOST_NAME, APP, IP_ADDR, VIP_ADDRESS, SECURE_VIP_ADDRESS,
-    STATUS, PORT, SECURE_PORT, HOME_PAGE_URL, STATUS_PAGE_URL, HEALTH_CHECK_URL,
-    DATA_CENTER_INFO, LEASE_INFO, METADATA, OVERRIDDENSTATUS, COUNTRY_ID];
-const RUST_FIELDS: &'static [&'static str] = &["host_name", "app", "ip_addr", "vip_address", "secure_vip_address",
-    "status", "port Option", "secure_port", "homepage_url", "status_page_url",
-    "health_check_url", "data_center_info", "lease_info", "metadata", OVERRIDDENSTATUS, "country_id"];
+const INSTANCE: &str = "Instance";
+const HOST_NAME: &str = "hostName";
+const APP: &str = "app";
+const IP_ADDR: &str = "ipAddr";
+const VIP_ADDRESS: &str = "vipAddress";
+const SECURE_VIP_ADDRESS: &str = "secureVipAddress";
+const STATUS: &str = "status";
+const PORT: &str = "port";
+const SECURE_PORT: &str = "securePort";
+const HOME_PAGE_URL: &str = "homePageUrl";
+const STATUS_PAGE_URL: &str = "statusPageUrl";
+const HEALTH_CHECK_URL: &str = "healthCheckUrl";
+const DATA_CENTER_INFO: &str = "dataCenterInfo";
+const LEASE_INFO: &str = "leaseInfo";
+const METADATA: &str = "metadata";
+const OVERRIDDENSTATUS: &str = "overriddenstatus";
+const COUNTRY_ID: &str = "countryId";
+const JSON_FIELDS: &[&str] = &[
+    INSTANCE,
+    HOST_NAME,
+    APP,
+    IP_ADDR,
+    VIP_ADDRESS,
+    SECURE_VIP_ADDRESS,
+    STATUS,
+    PORT,
+    SECURE_PORT,
+    HOME_PAGE_URL,
+    STATUS_PAGE_URL,
+    HEALTH_CHECK_URL,
+    DATA_CENTER_INFO,
+    LEASE_INFO,
+    METADATA,
+    OVERRIDDENSTATUS,
+    COUNTRY_ID,
+];
+const RUST_FIELDS: &[&str] = &[
+    "host_name",
+    "app",
+    "ip_addr",
+    "vip_address",
+    "secure_vip_address",
+    "status",
+    "port Option",
+    "secure_port",
+    "homepage_url",
+    "status_page_url",
+    "health_check_url",
+    "data_center_info",
+    "lease_info",
+    "metadata",
+    OVERRIDDENSTATUS,
+    "country_id",
+];
 
-const PORT_DOLLAR: &'static str = "$";
-const PORT_ENABLED: &'static str = "@enabled";
-const PORT_FIELDS: &'static [&'static str] = &[PORT_DOLLAR, PORT_ENABLED];
+const PORT_DOLLAR: &str = "$";
+const PORT_ENABLED: &str = "@enabled";
+const PORT_FIELDS: &[&str] = &[PORT_DOLLAR, PORT_ENABLED];
 
 #[derive(Debug, PartialEq)]
 pub struct Instance {
@@ -51,22 +82,24 @@ pub struct Instance {
     pub health_check_url: String,
     pub data_center_info: DataCenterInfo,
     pub lease_info: Option<LeaseInfo>,
-    pub metadata: Map<String, Value>
+    pub metadata: Map<String, Value>,
 }
 
 struct Port {
-    port: u16
+    port: u16,
 }
 
 impl Port {
     fn new(port: u16) -> Port {
-        Port { port: port }
+        Port { port }
     }
 }
 
 impl Serialize for Port {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut s = serializer.serialize_struct("Port", 2)?;
         s.serialize_field(PORT_DOLLAR, &self.port.to_string())?;
         s.serialize_field(PORT_ENABLED, "true")?;
@@ -75,14 +108,20 @@ impl Serialize for Port {
 }
 
 impl<'de> Deserialize<'de> for Port {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
-        enum Field { DollarSign, Enabled };
-
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field {
+            DollarSign,
+            Enabled,
+        }
 
         impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-                D: Deserializer<'de> {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
                 struct FieldVisitor;
 
                 impl<'de> Visitor<'de> for FieldVisitor {
@@ -91,12 +130,14 @@ impl<'de> Deserialize<'de> for Port {
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                         formatter.write_str("'$' or 'enabled'")
                     }
-                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                        E: DeError, {
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: DeError,
+                    {
                         match v {
                             PORT_DOLLAR => Ok(Field::DollarSign),
                             PORT_ENABLED => Ok(Field::Enabled),
-                            _ => Err(DeError::unknown_field(v, PORT_FIELDS))
+                            _ => Err(DeError::unknown_field(v, PORT_FIELDS)),
                         }
                     }
                 }
@@ -112,8 +153,10 @@ impl<'de> Deserialize<'de> for Port {
                 formatter.write_str("struct Port")
             }
 
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
-                A: MapAccess<'de>, {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
                 let mut maybe_dollar: Option<String> = None;
                 let mut maybe_enabled: Option<String> = None;
 
@@ -148,8 +191,10 @@ impl<'de> Deserialize<'de> for Port {
 }
 
 impl Serialize for Instance {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut s = serializer.serialize_struct(INSTANCE, 14)?;
         s.serialize_field(HOST_NAME, &self.host_name)?;
         s.serialize_field(APP, &self.app)?;
@@ -173,7 +218,7 @@ impl Serialize for Instance {
         s.serialize_field(HEALTH_CHECK_URL, &self.health_check_url)?;
         s.serialize_field(DATA_CENTER_INFO, &self.data_center_info)?;
 
-        if let &Some(ref lease_info) = &self.lease_info {
+        if let Some(lease_info) = &self.lease_info {
             s.serialize_field(LEASE_INFO, lease_info)?;
         }
 
@@ -186,8 +231,10 @@ impl Serialize for Instance {
 }
 
 impl<'de> Deserialize<'de> for Instance {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         enum Field {
             HostName,
             App,
@@ -202,12 +249,14 @@ impl<'de> Deserialize<'de> for Instance {
             HealthCheckUrl,
             DataCenterInfo,
             LeaseInfo,
-            Metadata
+            Metadata,
         }
 
         impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-                D: Deserializer<'de> {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
                 struct FieldVisitor;
 
                 impl<'de> Visitor<'de> for FieldVisitor {
@@ -216,8 +265,10 @@ impl<'de> Deserialize<'de> for Instance {
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                         formatter.write_str("An Instance field (see schema)")
                     }
-                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                        E: DeError {
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: DeError,
+                    {
                         match v {
                             HOST_NAME => Ok(Field::HostName),
                             APP => Ok(Field::App),
@@ -233,7 +284,7 @@ impl<'de> Deserialize<'de> for Instance {
                             DATA_CENTER_INFO => Ok(Field::DataCenterInfo),
                             LEASE_INFO => Ok(Field::LeaseInfo),
                             METADATA => Ok(Field::Metadata),
-                            _ => Err(DeError::unknown_field(v, JSON_FIELDS))
+                            _ => Err(DeError::unknown_field(v, JSON_FIELDS)),
                         }
                     }
                 }
@@ -251,8 +302,10 @@ impl<'de> Deserialize<'de> for Instance {
                 formatter.write_str("struct Instance")
             }
 
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
-                A: MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
                 let mut maybe_host_name = None;
                 let mut maybe_app = None;
                 let mut maybe_ip_addr = None;
@@ -275,79 +328,79 @@ impl<'de> Deserialize<'de> for Instance {
                                 return Err(DeError::duplicate_field(HOME_PAGE_URL));
                             }
                             maybe_homepage_url = Some(map.next_value()?);
-                        },
+                        }
                         Field::App => {
                             if maybe_app.is_some() {
                                 return Err(DeError::duplicate_field(APP));
                             }
                             maybe_app = Some(map.next_value()?);
-                        },
+                        }
                         Field::IpAddr => {
                             if maybe_ip_addr.is_some() {
                                 return Err(DeError::duplicate_field(IP_ADDR));
                             }
                             maybe_ip_addr = Some(map.next_value()?);
-                        },
+                        }
                         Field::VipAddress => {
                             if maybe_vip_address.is_some() {
                                 return Err(DeError::duplicate_field(VIP_ADDRESS));
                             }
                             maybe_vip_address = Some(map.next_value()?);
-                        },
+                        }
                         Field::SecureVipAddress => {
                             if maybe_secure_vip_address.is_some() {
                                 return Err(DeError::duplicate_field(SECURE_VIP_ADDRESS));
                             }
                             maybe_secure_vip_address = Some(map.next_value()?);
-                        },
+                        }
                         Field::Status => {
                             if maybe_status.is_some() {
                                 return Err(DeError::duplicate_field(STATUS));
                             }
                             maybe_status = Some(map.next_value()?);
-                        },
+                        }
                         Field::Port => {
                             if maybe_port.is_some() {
                                 return Err(DeError::duplicate_field(PORT));
                             }
                             maybe_port = Some(map.next_value()?);
-                        },
+                        }
                         Field::SecurePort => {
                             if maybe_secure_port.is_some() {
                                 return Err(DeError::duplicate_field(SECURE_PORT));
                             }
                             maybe_secure_port = Some(map.next_value()?);
-                        },
+                        }
                         Field::StatusPageUrl => {
                             if maybe_status_page_url.is_some() {
                                 return Err(DeError::duplicate_field(STATUS_PAGE_URL));
                             }
                             maybe_status_page_url = Some(map.next_value()?);
-                        },
+                        }
                         Field::HealthCheckUrl => {
                             if maybe_health_check_url.is_some() {
                                 return Err(DeError::duplicate_field(HEALTH_CHECK_URL));
                             }
                             maybe_health_check_url = Some(map.next_value()?);
-                        },
+                        }
                         Field::DataCenterInfo => {
                             if maybe_data_center_info.is_some() {
                                 return Err(DeError::duplicate_field(DATA_CENTER_INFO));
                             }
                             maybe_data_center_info = Some(map.next_value()?);
-                        },
+                        }
                         Field::LeaseInfo => {
                             if maybe_lease_info.is_some() {
                                 return Err(DeError::duplicate_field(LEASE_INFO));
                             }
                             maybe_lease_info = Some(map.next_value()?);
-                        },
+                        }
                         Field::Metadata => {
                             if maybe_metadata.is_some() {
                                 return Err(DeError::duplicate_field(METADATA));
                             }
                             maybe_metadata = Some(map.next_value()?);
-                        },
+                        }
                         Field::HostName => {
                             if maybe_host_name.is_some() {
                                 return Err(DeError::duplicate_field(HOST_NAME));
@@ -360,13 +413,19 @@ impl<'de> Deserialize<'de> for Instance {
                 let host_name = maybe_host_name.ok_or_else(|| DeError::missing_field(HOST_NAME));
                 let app = maybe_app.ok_or_else(|| DeError::missing_field(APP));
                 let ip_addr = maybe_ip_addr.ok_or_else(|| DeError::missing_field(IP_ADDR));
-                let vip_address = maybe_vip_address.ok_or_else(|| DeError::missing_field(VIP_ADDRESS));
-                let secure_vip_address = maybe_secure_vip_address.ok_or_else(|| DeError::missing_field(SECURE_VIP_ADDRESS));
+                let vip_address =
+                    maybe_vip_address.ok_or_else(|| DeError::missing_field(VIP_ADDRESS));
+                let secure_vip_address = maybe_secure_vip_address
+                    .ok_or_else(|| DeError::missing_field(SECURE_VIP_ADDRESS));
                 let status = maybe_status.ok_or_else(|| DeError::missing_field(STATUS));
-                let homepage_url = maybe_homepage_url.ok_or_else(|| DeError::missing_field(HOME_PAGE_URL));
-                let status_page_url = maybe_status_page_url.ok_or_else(|| DeError::missing_field(STATUS_PAGE_URL));
-                let health_check_url = maybe_health_check_url.ok_or_else(|| DeError::missing_field(HEALTH_CHECK_URL));
-                let data_center_info = maybe_data_center_info.ok_or_else(|| DeError::missing_field(DATA_CENTER_INFO));
+                let homepage_url =
+                    maybe_homepage_url.ok_or_else(|| DeError::missing_field(HOME_PAGE_URL));
+                let status_page_url =
+                    maybe_status_page_url.ok_or_else(|| DeError::missing_field(STATUS_PAGE_URL));
+                let health_check_url =
+                    maybe_health_check_url.ok_or_else(|| DeError::missing_field(HEALTH_CHECK_URL));
+                let data_center_info =
+                    maybe_data_center_info.ok_or_else(|| DeError::missing_field(DATA_CENTER_INFO));
                 let metadata = maybe_metadata.unwrap_or(Map::new());
 
                 Ok(Instance {
@@ -383,7 +442,7 @@ impl<'de> Deserialize<'de> for Instance {
                     health_check_url: health_check_url?,
                     data_center_info: data_center_info?,
                     lease_info: maybe_lease_info,
-                    metadata: metadata,
+                    metadata,
                 })
             }
         }
@@ -393,10 +452,10 @@ impl<'de> Deserialize<'de> for Instance {
 
 #[cfg(test)]
 pub mod tests {
+    use super::super::AmazonMetaData;
+    use super::super::DcName;
     use super::*;
     use serde_json;
-    use super::super::DcName;
-    use super::super::AmazonMetaData;
 
     #[test]
     fn test_instance_serialization() {
@@ -457,7 +516,10 @@ pub mod tests {
 
     pub fn build_test_instance() -> Instance {
         let mut metadata = Map::new();
-        metadata.insert("something".to_owned(), Value::String("somethingelse".to_owned()));
+        metadata.insert(
+            "something".to_owned(),
+            Value::String("somethingelse".to_owned()),
+        );
         Instance {
             host_name: "Foo".to_string(),
             app: "Bar".to_string(),
@@ -483,14 +545,13 @@ pub mod tests {
                     local_ip4: "127.0.0.12".to_string(),
                     hostname: "privatefoo.coma".to_string(),
                     ami_id: "ami0023".to_string(),
-                    instance_type: "c4xlarged".to_string()
-                })
+                    instance_type: "c4xlarged".to_string(),
+                }),
             },
             lease_info: Some(LeaseInfo {
-                eviction_duration_in_secs: Some(9600)
+                eviction_duration_in_secs: Some(9600),
             }),
-            metadata: metadata
+            metadata,
         }
     }
 }
-

@@ -1,18 +1,18 @@
+use serde::de::{Deserialize, Deserializer, Error as DeError, Visitor};
 use serde::ser::{Serialize, Serializer};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
-use std::iter::Iterator;
-use std::fmt;
 use std::convert::From;
-use std::str::FromStr;
 use std::error::Error;
+use std::fmt;
+use std::iter::Iterator;
+use std::str::FromStr;
 
-const MY_OWN: &'static str = "MyOwn";
-const AMAZON: &'static str = "Amazon";
+const MY_OWN: &str = "MyOwn";
+const AMAZON: &str = "Amazon";
 
 #[derive(Debug, PartialEq)]
 pub enum DcName {
     MyOwn,
-    Amazon
+    Amazon,
 }
 
 impl DcName {
@@ -23,17 +23,16 @@ impl DcName {
 
 #[derive(Debug)]
 pub struct InvalidDcNameError {
-    invalid_value: String
+    invalid_value: String,
 }
 
 impl InvalidDcNameError {
     pub fn new(invalid_nm: &str) -> Self {
         InvalidDcNameError {
-            invalid_value: invalid_nm.to_owned()
+            invalid_value: invalid_nm.to_owned(),
         }
     }
 }
-
 
 impl fmt::Display for InvalidDcNameError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -54,7 +53,7 @@ impl FromStr for DcName {
         match s {
             "MyOwn" => Ok(DcName::MyOwn),
             "Amazon" => Ok(DcName::Amazon),
-            _ => Err(InvalidDcNameError::new(s))
+            _ => Err(InvalidDcNameError::new(s)),
         }
     }
 }
@@ -63,51 +62,53 @@ impl From<DcName> for String {
     fn from(s: DcName) -> Self {
         match s {
             DcName::MyOwn => MY_OWN.to_owned(),
-            DcName::Amazon => AMAZON.to_owned()
+            DcName::Amazon => AMAZON.to_owned(),
         }
     }
 }
 
-impl<'a> From<&'a DcName> for String {
-    fn from(s: &'a DcName) -> Self {
-        match s {
-            &DcName::MyOwn => MY_OWN.to_owned(),
-            &DcName::Amazon => AMAZON.to_owned()
+impl From<&DcName> for String {
+    fn from(s: &DcName) -> Self {
+        match *s {
+            DcName::MyOwn => MY_OWN.to_owned(),
+            DcName::Amazon => AMAZON.to_owned(),
         }
     }
 }
 
 impl Serialize for DcName {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         serializer.serialize_str(String::from(self).as_ref())
     }
 }
 
 impl<'de> Deserialize<'de> for DcName {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         struct DcNameVisitor;
 
         impl<'de> Visitor<'de> for DcNameVisitor {
             type Value = DcName;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                let values = DcName::values()
-                    .iter()
-                    .fold(String::new(), |mut acc, v| {
-                        acc.push_str(String::from(v).as_ref());
-                        acc
-                    });
+                let values = DcName::values().iter().fold(String::new(), |mut acc, v| {
+                    acc.push_str(String::from(v).as_ref());
+                    acc
+                });
 
                 formatter.write_fmt(format_args!("Expecting {}", values))
             }
 
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                E: DeError {
-
-                DcName::from_str(v)
-                    .map_err(|err| E::custom(format!("{}", err)))
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: DeError,
+            {
+                DcName::from_str(v).map_err(|err| E::custom(format!("{}", err)))
             }
         }
 
@@ -137,4 +138,3 @@ mod test {
         assert_eq!(MY_OWN.to_owned(), String::from(DcName::MyOwn));
     }
 }
-

@@ -1,23 +1,22 @@
 use super::Application;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationResponse {
-    pub application: Application
+    pub application: Application,
 }
 
-impl<'a> ApplicationResponse {
+impl ApplicationResponse {
     pub fn new(application: Application) -> ApplicationResponse {
-        ApplicationResponse {
-            application: application
-        }
+        ApplicationResponse { application }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
-    use super::*;
     use super::super::instance::tests::{build_test_instance, build_test_instance_json};
+    use super::*;
+    use serde_json;
 
     #[test]
     fn test_application_response_serialization() {
@@ -25,7 +24,7 @@ mod tests {
         let instance = build_test_instance();
         let application: Application = Application {
             name: "test_app".to_owned(),
-            instance: instance
+            instance,
         };
         let ar = ApplicationResponse::new(application);
         let result = serde_json::to_string(&ar).unwrap();
@@ -44,7 +43,7 @@ mod tests {
         let instance = build_test_instance();
         let application: Application = Application {
             name: "test_app".to_owned(),
-            instance: instance
+            instance,
         };
         let ar = ApplicationResponse::new(application);
         let result = serde_json::from_str(&json).unwrap();
@@ -52,8 +51,9 @@ mod tests {
     }
 
     fn build_application_response_json() -> String {
-
-        format!("{{\"application\":{{\"name\":\"test_app\",\"instance\":{}}}}}", build_test_instance_json())
+        format!(
+            "{{\"application\":{{\"name\":\"test_app\",\"instance\":{}}}}}",
+            build_test_instance_json()
+        )
     }
 }
-

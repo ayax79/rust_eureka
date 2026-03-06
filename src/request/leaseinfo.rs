@@ -1,19 +1,21 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
+use serde::de::{Deserialize, Deserializer, Error as DeError, MapAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::fmt;
 
-const LEASE_INFO: &'static str = "LeaseInfo";
-const EVICTION_DURATION_IN_SECS: &'static str = "evictionDurationInSecs";
-const FIELDS: &'static [&'static str] = &[EVICTION_DURATION_IN_SECS];
+const LEASE_INFO: &str = "LeaseInfo";
+const EVICTION_DURATION_IN_SECS: &str = "evictionDurationInSecs";
+const FIELDS: &[&str] = &[EVICTION_DURATION_IN_SECS];
 
 #[derive(Debug, PartialEq)]
 pub struct LeaseInfo {
-    pub eviction_duration_in_secs: Option<u32>
+    pub eviction_duration_in_secs: Option<u32>,
 }
 
 impl Serialize for LeaseInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut s = serializer.serialize_struct(LEASE_INFO, 1)?;
         // if not specified we will serialize the default of 90
         let result = self.eviction_duration_in_secs.unwrap_or(90);
@@ -23,13 +25,19 @@ impl Serialize for LeaseInfo {
 }
 
 impl<'de> Deserialize<'de> for LeaseInfo {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
-        enum Field { EvictionDurationInSecs };
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field {
+            EvictionDurationInSecs,
+        }
 
         impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-                D: Deserializer<'de> {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
                 struct FieldVisitor;
 
                 impl<'de> Visitor<'de> for FieldVisitor {
@@ -39,15 +47,15 @@ impl<'de> Deserialize<'de> for LeaseInfo {
                         formatter.write_str("Expecting eviction_duration_in_secs")
                     }
 
-                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                        E: DeError {
-
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: DeError,
+                    {
                         match v {
                             EVICTION_DURATION_IN_SECS => Ok(Field::EvictionDurationInSecs),
-                            _ => Err(DeError::unknown_field(v, FIELDS))
+                            _ => Err(DeError::unknown_field(v, FIELDS)),
                         }
                     }
-
                 }
                 deserializer.deserialize_identifier(FieldVisitor)
             }
@@ -61,8 +69,10 @@ impl<'de> Deserialize<'de> for LeaseInfo {
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("struct LeaseInfoVisitor")
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
-                A: MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
                 let mut maybe_eviction_duration = None;
 
                 while let Some(key) = map.next_key()? {
@@ -75,8 +85,8 @@ impl<'de> Deserialize<'de> for LeaseInfo {
                         }
                     }
                 }
-                Ok(LeaseInfo{
-                    eviction_duration_in_secs: maybe_eviction_duration
+                Ok(LeaseInfo {
+                    eviction_duration_in_secs: maybe_eviction_duration,
                 })
             }
         }
@@ -92,7 +102,9 @@ mod test {
 
     #[test]
     fn test_lease_info_some() {
-        let li = LeaseInfo { eviction_duration_in_secs: Some(9600) };
+        let li = LeaseInfo {
+            eviction_duration_in_secs: Some(9600),
+        };
         let json = r#"{"evictionDurationInSecs":9600}"#;
         let result = serde_json::to_string(&li).unwrap();
         assert_eq!(json, result);
@@ -100,7 +112,9 @@ mod test {
 
     #[test]
     fn test_lease_info_none() {
-        let li = LeaseInfo { eviction_duration_in_secs: None };
+        let li = LeaseInfo {
+            eviction_duration_in_secs: None,
+        };
         let json = r#"{"evictionDurationInSecs":90}"#;
         let result = serde_json::to_string(&li).unwrap();
         assert_eq!(json, result);
@@ -108,10 +122,11 @@ mod test {
 
     #[test]
     fn test_deserialize_lease_info_some() {
-        let li = LeaseInfo { eviction_duration_in_secs: Some(90) };
+        let li = LeaseInfo {
+            eviction_duration_in_secs: Some(90),
+        };
         let json = r#"{"evictionDurationInSecs":90}"#;
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(json).unwrap();
         assert_eq!(li, result);
     }
-
 }

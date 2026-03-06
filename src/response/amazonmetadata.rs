@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct AmazonMetaData {
@@ -11,7 +13,7 @@ pub struct AmazonMetaData {
     pub local_ipv4: String,
     pub hostname: String,
     pub ami_id: String,
-    pub instance_type: String
+    pub instance_type: String,
 }
 
 #[cfg(test)]
@@ -32,7 +34,7 @@ pub mod tests {
             local_ipv4: "127.0.0.12".to_string(),
             hostname: "privatefoo.coma".to_string(),
             ami_id: "ami0023".to_string(),
-            instance_type: "c4xlarged".to_string()
+            instance_type: "c4xlarged".to_string(),
         };
         let json = sample_meta_data();
 
@@ -53,7 +55,7 @@ pub mod tests {
             local_ipv4: "127.0.0.12".to_string(),
             hostname: "privatefoo.coma".to_string(),
             ami_id: "ami0023".to_string(),
-            instance_type: "c4xlarged".to_string()
+            instance_type: "c4xlarged".to_string(),
         };
         let json = sample_meta_data();
         let result = serde_json::from_str(&json).unwrap();

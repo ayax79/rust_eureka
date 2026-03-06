@@ -1,23 +1,24 @@
 use super::Applications;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationsResponse {
-    pub applications: Applications
+    pub applications: Applications,
 }
 
-impl<'a> ApplicationsResponse {
+impl ApplicationsResponse {
     pub fn new(applications: Applications) -> ApplicationsResponse {
-        ApplicationsResponse {
-            applications: applications
-        }
+        ApplicationsResponse { applications }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
+    use super::super::applications::tests::{
+        build_test_applications, build_test_applications_json,
+    };
     use super::*;
-    use super::super::applications::tests::{build_test_applications, build_test_applications_json};
+    use serde_json;
 
     #[test]
     fn test_applications_response_serialization() {
@@ -25,7 +26,6 @@ mod tests {
         let ar = ApplicationsResponse::new(applications);
         let result = serde_json::to_string(&ar).unwrap();
         assert!(result.contains("{\"applications\":"))
-
     }
 
     #[test]
@@ -96,7 +96,7 @@ mod tests {
             }
         }
     }
-}"#.to_string()
+}"#
+        .to_string()
     }
 }
-

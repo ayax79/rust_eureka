@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LeaseInfo {
@@ -6,7 +8,7 @@ pub struct LeaseInfo {
     pub registration_timestamp: i64,
     pub last_renewal_timestamp: i64,
     pub eviction_timestamp: i64,
-    pub service_up_timestamp: i64
+    pub service_up_timestamp: i64,
 }
 
 #[cfg(test)]
@@ -15,7 +17,7 @@ mod tests {
     use serde_json;
 
     #[test]
-    fn test_serialize(){
+    fn test_serialize() {
         let li = build_lease_info();
         let json = build_lease_info_json();
         let result = serde_json::to_string(&li).unwrap();
@@ -30,7 +32,6 @@ mod tests {
         assert_eq!(li, result);
     }
 
-
     fn build_lease_info_json() -> String {
         r#"{
             "renewalIntervalInSecs": 30,
@@ -40,9 +41,9 @@ mod tests {
             "evictionTimestamp": 0,
             "serviceUpTimestamp": 1503442035721
         }"#
-            .to_string()
-            .replace(" ", "")
-            .replace("\n", "")
+        .to_string()
+        .replace(" ", "")
+        .replace("\n", "")
     }
 
     fn build_lease_info() -> LeaseInfo {

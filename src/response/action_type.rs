@@ -1,19 +1,19 @@
-use std::fmt;
-use std::convert::From;
-use std::str::FromStr;
-use std::error::Error;
+use serde::de::{Deserialize, Deserializer, Error as DeError, Visitor};
 use serde::ser::{Serialize, Serializer};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError};
+use std::convert::From;
+use std::error::Error;
+use std::fmt;
+use std::str::FromStr;
 
-const ADDED: &'static str = "ADDED";
-const DELETED: &'static str = "DELETED";
-const MODIFIED: &'static str = "MODIFIED";
+const ADDED: &str = "ADDED";
+const DELETED: &str = "DELETED";
+const MODIFIED: &str = "MODIFIED";
 
 #[derive(Debug, PartialEq)]
 pub enum ActionType {
     Added,
     Deleted,
-    Modified
+    Modified,
 }
 
 impl ActionType {
@@ -25,17 +25,16 @@ impl ActionType {
 
 #[derive(Debug)]
 pub struct InvalidActionTypeError {
-    invalid_value: String
+    invalid_value: String,
 }
 
 impl InvalidActionTypeError {
     pub fn new(invalid_nm: &str) -> Self {
         InvalidActionTypeError {
-            invalid_value: invalid_nm.to_owned()
+            invalid_value: invalid_nm.to_owned(),
         }
     }
 }
-
 
 impl fmt::Display for InvalidActionTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -57,7 +56,7 @@ impl FromStr for ActionType {
             ADDED => Ok(ActionType::Added),
             DELETED => Ok(ActionType::Deleted),
             MODIFIED => Ok(ActionType::Modified),
-            _ => Err(InvalidActionTypeError::new(s))
+            _ => Err(InvalidActionTypeError::new(s)),
         }
     }
 }
@@ -72,26 +71,30 @@ impl From<ActionType> for String {
     }
 }
 
-impl<'a> From<&'a ActionType> for String {
+impl From<&ActionType> for String {
     fn from(s: &ActionType) -> Self {
-        match s {
-            &ActionType::Added => ADDED.to_string(),
-            &ActionType::Deleted => DELETED.to_string(),
-            &ActionType::Modified => MODIFIED.to_string(),
+        match *s {
+            ActionType::Added => ADDED.to_string(),
+            ActionType::Deleted => DELETED.to_string(),
+            ActionType::Modified => MODIFIED.to_string(),
         }
     }
 }
 
 impl Serialize for ActionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         serializer.serialize_str(String::from(self).as_ref())
     }
 }
 
 impl<'de> Deserialize<'de> for ActionType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         struct ActionTypeVisitor;
 
         impl<'de> Visitor<'de> for ActionTypeVisitor {
@@ -108,11 +111,11 @@ impl<'de> Deserialize<'de> for ActionType {
                 formatter.write_fmt(format_args!("Expecting {}", values))
             }
 
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                E: DeError {
-
-                ActionType::from_str(v)
-                    .map_err(|err| E::custom(format!("{}", err)))
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: DeError,
+            {
+                ActionType::from_str(v).map_err(|err| E::custom(format!("{}", err)))
             }
         }
 
@@ -128,7 +131,10 @@ mod test {
     fn test_from_str() {
         assert_eq!(ActionType::Added, ActionType::from_str(ADDED).unwrap());
         assert_eq!(ActionType::Deleted, ActionType::from_str(DELETED).unwrap());
-        assert_eq!(ActionType::Modified, ActionType::from_str(MODIFIED).unwrap());
+        assert_eq!(
+            ActionType::Modified,
+            ActionType::from_str(MODIFIED).unwrap()
+        );
     }
 
     #[test]
@@ -144,4 +150,3 @@ mod test {
         assert_eq!(MODIFIED.to_owned(), String::from(ActionType::Modified));
     }
 }
-

@@ -1,10 +1,7 @@
-use std::error::Error;
-use std::fmt::Display;
-use std::fmt;
-use std::convert::From;
-use hyper::error::Error as HyperError;
+use hyper::http::uri::InvalidUri;
 use serde_json::error::Error as ParserError;
-use hyper::error::UriError;
+use std::error::Error;
+use std::fmt::{self, Display};
 
 use self::EurekaClientError::*;
 
@@ -12,42 +9,34 @@ use self::EurekaClientError::*;
 #[derive(Debug)]
 pub enum EurekaClientError {
     /// An underlying error occurred with the Hyper http client
-    ClientError(HyperError),
+    ClientError(hyper::Error),
     /// An error occurred parsing a response from the server
     JsonError(ParserError),
     /// A generic error that was no otherwise typed occurred
     GenericError(String),
     /// The Uri of the Eureka server was invalid
-    InvalidUri(UriError),
+    InvalidUri(InvalidUri),
     /// An server error occurred with Eureka
     InternalServerError,
     /// Request parameters sent to Eureka were invalid
     BadRequest,
     /// The specified resource does not exist in eureka, such as an invalid application name
-    NotFound
+    NotFound,
 }
 
 impl Error for EurekaClientError {
-    fn description(&self) -> &str {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
         match *self {
-            ClientError(_) => "Error calling downstream client: ",
-            JsonError(_) => "A json error occurred ",
-            BadRequest => "Received a 400 (Bad Request) response",
-            _ => "Some error occurred"
-        }
-    }
-
-    fn cause(&self) -> Option<&Error> {
-        match *self {
-            ClientError(ref error) => Some(error as &Error),
-            JsonError(ref error) => Some(error as &Error),
-            _ => None
+            ClientError(ref error) => Some(error),
+            JsonError(ref error) => Some(error),
+            InvalidUri(ref error) => Some(error),
+            _ => None,
         }
     }
 }
 
-impl From<HyperError> for EurekaClientError {
-    fn from(err: HyperError) -> EurekaClientError {
+impl From<hyper::Error> for EurekaClientError {
+    fn from(err: hyper::Error) -> EurekaClientError {
         ClientError(err)
     }
 }
@@ -58,14 +47,22 @@ impl From<ParserError> for EurekaClientError {
     }
 }
 
-impl From<UriError> for EurekaClientError {
-    fn from(err: UriError) -> EurekaClientError {
+impl From<InvalidUri> for EurekaClientError {
+    fn from(err: InvalidUri) -> EurekaClientError {
         InvalidUri(err)
     }
 }
 
 impl Display for EurekaClientError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
+        match self {
+            ClientError(e) => write!(f, "HTTP client error: {}", e),
+            JsonError(e) => write!(f, "JSON parsing error: {}", e),
+            GenericError(s) => write!(f, "Generic error: {}", s),
+            InvalidUri(e) => write!(f, "Invalid URI: {}", e),
+            InternalServerError => write!(f, "Internal server error (500)"),
+            BadRequest => write!(f, "Bad request (400)"),
+            NotFound => write!(f, "Not found (404)"),
+        }
     }
 }

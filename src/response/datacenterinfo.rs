@@ -1,27 +1,29 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
-use std::fmt;
-use super::DcName;
 use super::AmazonMetaData;
+use super::DcName;
+use serde::de::{Deserialize, Deserializer, Error as DeError, MapAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+use std::fmt;
 
 // Field name constants
-const NAME: &'static str = "name";
-const METADATA: &'static str = "metadata";
+const NAME: &str = "name";
+const METADATA: &str = "metadata";
 // The eureka API has some awful cruft
-const CLASS: &'static str = "@class";
-const CLASS_VALUE: &'static str = "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo";
-const DATA_CENTER_INFO: &'static str = "DataCenterInfo";
-const FIELDS: &'static [&'static str] = &[CLASS, NAME, METADATA];
+const CLASS: &str = "@class";
+const CLASS_VALUE: &str = "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo";
+const DATA_CENTER_INFO: &str = "DataCenterInfo";
+const FIELDS: &[&str] = &[CLASS, NAME, METADATA];
 
 #[derive(Debug, PartialEq)]
 pub struct DataCenterInfo {
     pub name: DcName,
-    pub metadata: Option<AmazonMetaData>
+    pub metadata: Option<AmazonMetaData>,
 }
 
 impl Serialize for DataCenterInfo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut s = serializer.serialize_struct(DATA_CENTER_INFO, 2)?;
         // weird netflix field
         s.serialize_field(CLASS, CLASS_VALUE)?;
@@ -32,13 +34,21 @@ impl Serialize for DataCenterInfo {
 }
 
 impl<'de> Deserialize<'de> for DataCenterInfo {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
-        enum Field { Name, Metadata, Class };
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field {
+            Name,
+            Metadata,
+            Class,
+        }
 
         impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-                D: Deserializer<'de> {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
                 struct FieldVisitor;
 
                 impl<'de> Visitor<'de> for FieldVisitor {
@@ -48,13 +58,15 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
                         formatter.write_str("Expecting `name` or `metadata` ")
                     }
 
-                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                        E: DeError, {
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: DeError,
+                    {
                         match v {
                             NAME => Ok(Field::Name),
                             METADATA => Ok(Field::Metadata),
                             CLASS => Ok(Field::Class),
-                            _ => Err(DeError::unknown_field(v, FIELDS))
+                            _ => Err(DeError::unknown_field(v, FIELDS)),
                         }
                     }
                 }
@@ -70,8 +82,10 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("struct DataCenterInfo")
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
-                A: MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
                 let mut maybe_name = None;
                 let mut maybe_metadata = None;
                 let mut maybe_class: Option<&str> = None;
@@ -83,13 +97,13 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
                                 return Err(DeError::duplicate_field(NAME));
                             }
                             maybe_name = Some(map.next_value()?);
-                        },
+                        }
                         Field::Metadata => {
                             if maybe_metadata.is_some() {
                                 return Err(DeError::duplicate_field(METADATA));
                             }
                             maybe_metadata = Some(map.next_value()?);
-                        },
+                        }
                         Field::Class => {
                             maybe_class = Some(map.next_value()?);
                         }
@@ -99,7 +113,7 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
                 debug!("Found ignored field @class {:?} ?", maybe_class);
                 Ok(DataCenterInfo {
                     name: name?,
-                    metadata: maybe_metadata
+                    metadata: maybe_metadata,
                 })
             }
         }
@@ -109,9 +123,9 @@ impl<'de> Deserialize<'de> for DataCenterInfo {
 
 #[cfg(test)]
 pub mod test {
+    use super::super::amazonmetadata::tests::sample_meta_data;
     use super::*;
     use serde_json;
-    use super::super::amazonmetadata::tests::sample_meta_data;
 
     #[test]
     fn test_serialize_data_center_info() {
@@ -128,8 +142,8 @@ pub mod test {
                 local_ipv4: "127.0.0.12".to_string(),
                 hostname: "privatefoo.coma".to_string(),
                 ami_id: "ami0023".to_string(),
-                instance_type: "c4xlarged".to_string()
-            })
+                instance_type: "c4xlarged".to_string(),
+            }),
         };
         let json = sample_data_center();
         let result = serde_json::to_string(&dci).unwrap();
@@ -151,8 +165,8 @@ pub mod test {
                 local_ipv4: "127.0.0.12".to_string(),
                 hostname: "privatefoo.coma".to_string(),
                 ami_id: "ami0023".to_string(),
-                instance_type: "c4xlarged".to_string()
-            })
+                instance_type: "c4xlarged".to_string(),
+            }),
         };
         let json = sample_data_center();
         println!("json {}", json);
@@ -163,6 +177,4 @@ pub mod test {
     fn sample_data_center() -> String {
         format!("{{\"@class\":\"com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo\",\"name\":\"Amazon\",\"metadata\":{}}}", sample_meta_data())
     }
-
-
 }

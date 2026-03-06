@@ -1,24 +1,45 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::de::{Deserialize, Deserializer, Visitor, Error as DeError, MapAccess};
+use serde::de::{Deserialize, Deserializer, Error as DeError, MapAccess, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::fmt;
 
-const AMI_LAUNCH_INDEX: &'static str = "ami-launch-index";
-const LOCAL_HOSTNAME: &'static str = "local-hostname";
-const AVAILABILITY_ZONE: &'static str = "availability-zone";
-const INSTANCE_ID: &'static str = "instance-id";
-const PUBLIC_IPV4: &'static str = "public-ipv4";
-const PUBLIC_HOSTNAME: &'static str = "public-hostname";
-const AMI_MANIFEST_PATH: &'static str = "ami-manifest-path";
-const LOCAL_IPV4: &'static str = "local-ipv4";
-const HOSTNAME: &'static str = "hostname";
-const AMI_ID: &'static str = "ami-id";
-const INSTANCE_TYPE: &'static str = "instance-type";
-const JSON_FIELDS: &'static [&'static str] = &[AMI_LAUNCH_INDEX, LOCAL_HOSTNAME, AVAILABILITY_ZONE, INSTANCE_ID,
-    PUBLIC_IPV4, PUBLIC_HOSTNAME, AMI_MANIFEST_PATH, LOCAL_IPV4,
-    HOSTNAME, AMI_ID, INSTANCE_TYPE];
-const RUST_FIELDS: &'static [&'static str] = &["ami_launch_index", "local_hostname", "availability_zone", "instance_id",
-    "public_ip4", "public_hostname", "ami_manifest_path", "local_ip4", "hostname", "ami_id", "instance_type"];
-const AMAZON_META_DATA: &'static str = "AmazonMetaData";
+const AMI_LAUNCH_INDEX: &str = "ami-launch-index";
+const LOCAL_HOSTNAME: &str = "local-hostname";
+const AVAILABILITY_ZONE: &str = "availability-zone";
+const INSTANCE_ID: &str = "instance-id";
+const PUBLIC_IPV4: &str = "public-ipv4";
+const PUBLIC_HOSTNAME: &str = "public-hostname";
+const AMI_MANIFEST_PATH: &str = "ami-manifest-path";
+const LOCAL_IPV4: &str = "local-ipv4";
+const HOSTNAME: &str = "hostname";
+const AMI_ID: &str = "ami-id";
+const INSTANCE_TYPE: &str = "instance-type";
+const JSON_FIELDS: &[&str] = &[
+    AMI_LAUNCH_INDEX,
+    LOCAL_HOSTNAME,
+    AVAILABILITY_ZONE,
+    INSTANCE_ID,
+    PUBLIC_IPV4,
+    PUBLIC_HOSTNAME,
+    AMI_MANIFEST_PATH,
+    LOCAL_IPV4,
+    HOSTNAME,
+    AMI_ID,
+    INSTANCE_TYPE,
+];
+const RUST_FIELDS: &[&str] = &[
+    "ami_launch_index",
+    "local_hostname",
+    "availability_zone",
+    "instance_id",
+    "public_ip4",
+    "public_hostname",
+    "ami_manifest_path",
+    "local_ip4",
+    "hostname",
+    "ami_id",
+    "instance_type",
+];
+const AMAZON_META_DATA: &str = "AmazonMetaData";
 
 #[derive(Debug, PartialEq)]
 pub struct AmazonMetaData {
@@ -32,12 +53,14 @@ pub struct AmazonMetaData {
     pub local_ip4: String,
     pub hostname: String,
     pub ami_id: String,
-    pub instance_type: String
+    pub instance_type: String,
 }
 
 impl Serialize for AmazonMetaData {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut s = serializer.serialize_struct(AMAZON_META_DATA, 11)?;
         s.serialize_field(AMI_LAUNCH_INDEX, &self.ami_launch_index)?;
         s.serialize_field(LOCAL_HOSTNAME, &self.local_hostname)?;
@@ -55,13 +78,29 @@ impl Serialize for AmazonMetaData {
 }
 
 impl<'de> Deserialize<'de> for AmazonMetaData {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-        D: Deserializer<'de> {
-        enum Field { AmiLaunchIndex, LocalHostname, AvailabilityZone, InstanceId, PublicIp4, PublicHostname, AmiManifestPath, LocalIp4, Hostname, AmiId, InstanceType };
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field {
+            AmiLaunchIndex,
+            LocalHostname,
+            AvailabilityZone,
+            InstanceId,
+            PublicIp4,
+            PublicHostname,
+            AmiManifestPath,
+            LocalIp4,
+            Hostname,
+            AmiId,
+            InstanceType,
+        }
 
         impl<'de> Deserialize<'de> for Field {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-                D: Deserializer<'de> {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
                 struct FieldVisitor;
 
                 impl<'de> Visitor<'de> for FieldVisitor {
@@ -71,8 +110,10 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
                         formatter.write_str("An AmazonMetaData field (see schema)")
                     }
 
-                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where
-                        E: DeError {
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: DeError,
+                    {
                         match v {
                             AMI_LAUNCH_INDEX => Ok(Field::AmiLaunchIndex),
                             LOCAL_HOSTNAME => Ok(Field::LocalHostname),
@@ -85,7 +126,7 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
                             HOSTNAME => Ok(Field::Hostname),
                             AMI_ID => Ok(Field::AmiId),
                             INSTANCE_TYPE => Ok(Field::InstanceType),
-                            _ => Err(DeError::unknown_field(v, JSON_FIELDS))
+                            _ => Err(DeError::unknown_field(v, JSON_FIELDS)),
                         }
                     }
                 }
@@ -103,8 +144,10 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
                 formatter.write_str("struct AmazonMetaDataVisitor")
             }
 
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where
-                A: MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
                 let mut maybe_ami_launch_index = None;
                 let mut maybe_local_hostname = None;
                 let mut maybe_availability_zone = None;
@@ -124,81 +167,89 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
                                 return Err(DeError::duplicate_field(AMI_LAUNCH_INDEX));
                             }
                             maybe_ami_launch_index = Some(map.next_value()?)
-                        },
+                        }
                         Field::LocalHostname => {
                             if maybe_local_hostname.is_some() {
                                 return Err(DeError::duplicate_field(LOCAL_HOSTNAME));
                             }
                             maybe_local_hostname = Some(map.next_value()?)
-                        },
+                        }
                         Field::AvailabilityZone => {
                             if maybe_availability_zone.is_some() {
                                 return Err(DeError::duplicate_field(AVAILABILITY_ZONE));
                             }
-                            maybe_availability_zone= Some(map.next_value()?)
-                        },
+                            maybe_availability_zone = Some(map.next_value()?)
+                        }
                         Field::InstanceId => {
                             if maybe_instance_id.is_some() {
                                 return Err(DeError::duplicate_field(INSTANCE_ID));
                             }
-                            maybe_instance_id= Some(map.next_value()?)
-                        },
+                            maybe_instance_id = Some(map.next_value()?)
+                        }
                         Field::PublicIp4 => {
                             if maybe_public_ip4.is_some() {
                                 return Err(DeError::duplicate_field(PUBLIC_IPV4));
                             }
-                            maybe_public_ip4= Some(map.next_value()?)
-                        },
+                            maybe_public_ip4 = Some(map.next_value()?)
+                        }
                         Field::PublicHostname => {
                             if maybe_public_hostname.is_some() {
                                 return Err(DeError::duplicate_field(PUBLIC_HOSTNAME));
                             }
-                            maybe_public_hostname= Some(map.next_value()?)
-                        },
+                            maybe_public_hostname = Some(map.next_value()?)
+                        }
                         Field::AmiManifestPath => {
                             if maybe_ami_manifest_path.is_some() {
                                 return Err(DeError::duplicate_field(AMI_MANIFEST_PATH));
                             }
-                            maybe_ami_manifest_path= Some(map.next_value()?)
-                        },
+                            maybe_ami_manifest_path = Some(map.next_value()?)
+                        }
                         Field::LocalIp4 => {
                             if maybe_local_ip4.is_some() {
                                 return Err(DeError::duplicate_field(LOCAL_IPV4));
                             }
-                            maybe_local_ip4= Some(map.next_value()?)
-                        },
+                            maybe_local_ip4 = Some(map.next_value()?)
+                        }
                         Field::Hostname => {
                             if maybe_hostname.is_some() {
                                 return Err(DeError::duplicate_field(HOSTNAME));
                             }
-                            maybe_hostname= Some(map.next_value()?)
-                        },
+                            maybe_hostname = Some(map.next_value()?)
+                        }
                         Field::AmiId => {
                             if maybe_ami_id.is_some() {
                                 return Err(DeError::duplicate_field(AMI_ID));
                             }
-                            maybe_ami_id= Some(map.next_value()?)
-                        },
+                            maybe_ami_id = Some(map.next_value()?)
+                        }
                         Field::InstanceType => {
                             if maybe_instance_type.is_some() {
                                 return Err(DeError::duplicate_field(INSTANCE_TYPE));
                             }
-                            maybe_instance_type= Some(map.next_value()?)
+                            maybe_instance_type = Some(map.next_value()?)
                         }
                     }
                 }
 
-                let ami_launch_index = maybe_ami_launch_index.ok_or_else(|| DeError::missing_field(AMI_LAUNCH_INDEX));
-                let local_hostname = maybe_local_hostname.ok_or_else(|| DeError::missing_field(LOCAL_HOSTNAME));
-                let availability_zone = maybe_availability_zone.ok_or_else(|| DeError::missing_field(AVAILABILITY_ZONE));
-                let instance_id = maybe_instance_id.ok_or_else(|| DeError::missing_field(INSTANCE_ID));
-                let public_ip4 = maybe_public_ip4.ok_or_else(|| DeError::missing_field(PUBLIC_IPV4));
-                let public_hostname = maybe_public_hostname.ok_or_else(|| DeError::missing_field(PUBLIC_HOSTNAME));
-                let ami_manifest_path = maybe_ami_manifest_path.ok_or_else(|| DeError::missing_field(AMI_MANIFEST_PATH));
+                let ami_launch_index =
+                    maybe_ami_launch_index.ok_or_else(|| DeError::missing_field(AMI_LAUNCH_INDEX));
+                let local_hostname =
+                    maybe_local_hostname.ok_or_else(|| DeError::missing_field(LOCAL_HOSTNAME));
+                let availability_zone = maybe_availability_zone
+                    .ok_or_else(|| DeError::missing_field(AVAILABILITY_ZONE));
+                let instance_id =
+                    maybe_instance_id.ok_or_else(|| DeError::missing_field(INSTANCE_ID));
+                let public_ip4 =
+                    maybe_public_ip4.ok_or_else(|| DeError::missing_field(PUBLIC_IPV4));
+                let public_hostname =
+                    maybe_public_hostname.ok_or_else(|| DeError::missing_field(PUBLIC_HOSTNAME));
+                let ami_manifest_path = maybe_ami_manifest_path
+                    .ok_or_else(|| DeError::missing_field(AMI_MANIFEST_PATH));
                 let local_ip4 = maybe_local_ip4.ok_or_else(|| DeError::missing_field(LOCAL_IPV4));
                 let hostname = maybe_hostname.ok_or_else(|| DeError::missing_field(HOSTNAME));
                 let ami_id = maybe_ami_id.ok_or_else(|| DeError::missing_field(AMI_ID));
-                let instance_type = maybe_instance_type.ok_or_else(|| DeError::missing_field(INSTANCE_TYPE));
+                let instance_type =
+                    maybe_instance_type.ok_or_else(|| DeError::missing_field(INSTANCE_TYPE));
 
                 Ok(AmazonMetaData {
                     ami_launch_index: ami_launch_index?,
@@ -211,7 +262,7 @@ impl<'de> Deserialize<'de> for AmazonMetaData {
                     local_ip4: local_ip4?,
                     hostname: hostname?,
                     ami_id: ami_id?,
-                    instance_type: instance_type?
+                    instance_type: instance_type?,
                 })
             }
         }
@@ -237,7 +288,7 @@ pub mod test {
             local_ip4: "127.0.0.12".to_string(),
             hostname: "privatefoo.coma".to_string(),
             ami_id: "ami0023".to_string(),
-            instance_type: "c4xlarged".to_string()
+            instance_type: "c4xlarged".to_string(),
         };
         let json = sample_meta_data();
 
@@ -258,7 +309,7 @@ pub mod test {
             local_ip4: "127.0.0.12".to_string(),
             hostname: "privatefoo.coma".to_string(),
             ami_id: "ami0023".to_string(),
-            instance_type: "c4xlarged".to_string()
+            instance_type: "c4xlarged".to_string(),
         };
         let json = sample_meta_data();
         let result = serde_json::from_str(&json).unwrap();
