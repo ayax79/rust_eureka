@@ -100,6 +100,8 @@ EUREKA_URI=http://localhost:8080 cargo test --test integration_tests -- --ignore
 
 This project follows strict Rust quality standards:
 
+CI: GitHub Actions workflow added to run formatting, clippy, tests, docs, and security/coverage checks. See .github/workflows/ci.yml
+
 - ✅ Zero clippy warnings with `-D warnings`
 - ✅ Formatted with `rustfmt`
 - ✅ 80%+ code coverage
