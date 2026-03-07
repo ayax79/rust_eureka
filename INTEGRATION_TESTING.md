@@ -1,10 +1,14 @@
 # Integration Tests for rust_eureka
 
-This document explains how to run integration tests against a real Eureka server.
+<!-- markdownlint-disable no-bare-urls line-length --->
+
+This document explains how to run integration tests against a real Eureka
+server.
 
 ## Prerequisites
 
-You need a running Eureka server on `http://localhost:8080`. There are several ways to start one:
+You need a running Eureka server on `http://localhost:8080`. There are several
+ways to start one:
 
 ### Option 1: Using Docker (Recommended)
 
@@ -14,7 +18,8 @@ The easiest way is to use the official Spring Cloud Eureka Docker image:
 docker run -p 8080:8080 springcloud/eureka
 ```
 
-Wait a few seconds for the server to start. You can verify it's running by visiting http://localhost:8080 in your browser.
+Wait a few seconds for the server to start. You can verify it's running by
+visiting http://localhost:8080 in your browser.
 
 ### Option 2: Using the Nike Edge Eureka Server
 
@@ -61,7 +66,8 @@ EUREKA_URI=http://localhost:8080 cargo test --test integration_tests test_regist
 EUREKA_URI=http://localhost:8080 cargo test --test integration_tests -- --ignored --nocapture --test-threads=1
 ```
 
-**Important:** The `--test-threads=1` flag runs tests sequentially to avoid conflicts between test instances.
+**Important:** The `--test-threads=1` flag runs tests sequentially to avoid
+conflicts between test instances.
 
 ## Test Coverage
 
@@ -102,6 +108,7 @@ The integration tests cover the following scenarios:
 ## Test Application Naming
 
 Each test uses a unique application name to avoid conflicts:
+
 - Format: `RUST_EUREKA_TEST_<TEST_NAME>`
 - Example: `RUST_EUREKA_TEST_REGISTER`
 
@@ -110,34 +117,46 @@ This ensures tests can run independently without interfering with each other.
 ## Troubleshooting
 
 ### Connection Refused
-```
+
+```shellscript
 Error: ClientError(hyper::Error(Connect, ConnectError...))
 ```
+
 **Solution:** Make sure Eureka server is running on localhost:8080
 
 ### 404 Not Found
-```
+
+```shellscript
 Error: NotFound
 ```
+
 **Possible causes:**
-1. Wrong base URL - ensure you're using `http://localhost:8080` (not `/eureka` or `/v2/apps`)
+
+1. Wrong base URL - ensure you're using `http://localhost:8080` (not `/eureka`
+   or `/v2/apps`)
 2. Server not fully started - wait a few more seconds
 3. Wrong API version - this client uses Eureka v2 API
 
 ### Tests Hanging
+
 **Solution:** Run with `--test-threads=1` to avoid race conditions
 
 ### Registration Fails
+
 Check the Eureka server logs for errors. Common issues:
+
 - Invalid JSON in request body
 - Required fields missing
 - Server-side validation failures
 
 ## Cleaning Up
 
-After running tests, registered test instances will remain in Eureka for up to 90 seconds (the eviction duration). They will be automatically removed when their leases expire.
+After running tests, registered test instances will remain in Eureka for up to
+90 seconds (the eviction duration). They will be automatically removed when
+their leases expire.
 
 To clean up immediately, restart the Eureka server:
+
 ```bash
 # If using Docker:
 docker ps  # Find the container ID
@@ -164,6 +183,7 @@ services:
 ```
 
 Then in your CI script:
+
 ```bash
 # Start Eureka
 docker-compose up -d

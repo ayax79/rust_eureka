@@ -1,9 +1,12 @@
 # rust_eureka
 
+<!-- markdownlint-disable line-length --->
+
 [![CI](https://github.com/ayax79/rust_eureka/actions/workflows/ci.yml/badge.svg)](https://github.com/ayax79/rust_eureka/actions/workflows/ci.yml)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-A Rust implementation of a client for Netflix [Eureka](https://github.com/Netflix/eureka)
+A Rust implementation of a client for Netflix
+[Eureka](https://github.com/Netflix/eureka)
 
 ## Features
 
@@ -84,7 +87,9 @@ cargo test
 
 ### Integration Tests
 
-The project includes comprehensive integration tests that run against a real Eureka server. See [INTEGRATION_TESTING.md](INTEGRATION_TESTING.md) for detailed instructions.
+The project includes comprehensive integration tests that run against a real
+Eureka server. See [INTEGRATION_TESTING.md](INTEGRATION_TESTING.md) for detailed
+instructions.
 
 Quick start:
 
@@ -100,12 +105,13 @@ EUREKA_URI=http://localhost:8080 cargo test --test integration_tests -- --ignore
 
 This project follows strict Rust quality standards:
 
-CI: GitHub Actions workflow added to run formatting, clippy, tests, docs, and security/coverage checks. See .github/workflows/ci.yml
+CI: GitHub Actions workflow added to run formatting, clippy, tests, docs, and
+security/coverage checks. See .github/workflows/ci.yml
 
-- ✅ Zero clippy warnings with `-D warnings`
-- ✅ Formatted with `rustfmt`
-- ✅ 80%+ code coverage
-- ✅ Comprehensive documentation
+- Zero clippy warnings with `-D warnings`
+- Formatted with `rustfmt`
+- 80%+ code coverage
+- Comprehensive documentation
 
 See [AGENT_GUIDELINES.md](.project_hints) for detailed development guidelines.
 
@@ -126,9 +132,9 @@ This client implements the Eureka v2 REST API:
 - `GET /v2/apps/{appID}` - Get application
 - `GET /v2/apps` - Get all applications
 
-For more details, see the [Eureka REST API documentation](https://github.com/Netflix/eureka/wiki/Eureka-REST-operations).
+For more details, see the
+[Eureka REST API documentation](https://github.com/Netflix/eureka/wiki/Eureka-REST-operations).
 
 ## License
 
-Licensed under the MIT license. See [LICENSE](LICENSE) for details.  
-
+Licensed under the MIT license. See [LICENSE](LICENSE) for details.
