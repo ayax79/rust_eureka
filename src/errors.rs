@@ -1,21 +1,21 @@
-use hyper::http::uri::InvalidUri;
 use serde_json::error::Error as ParserError;
 use std::error::Error;
 use std::fmt::{self, Display};
+use url::ParseError;
 
 use self::EurekaClientError::*;
 
 /// Errors that can be returned by the [EurekaClient](struct.EurekaClient.html)
 #[derive(Debug)]
 pub enum EurekaClientError {
-    /// An underlying error occurred with the Hyper http client
-    ClientError(hyper::Error),
+    /// An underlying error occurred with the HTTP client
+    ClientError(reqwest::Error),
     /// An error occurred parsing a response from the server
     JsonError(ParserError),
     /// A generic error that was no otherwise typed occurred
     GenericError(String),
     /// The Uri of the Eureka server was invalid
-    InvalidUri(InvalidUri),
+    InvalidUri(ParseError),
     /// An server error occurred with Eureka
     InternalServerError,
     /// Request parameters sent to Eureka were invalid
@@ -35,8 +35,8 @@ impl Error for EurekaClientError {
     }
 }
 
-impl From<hyper::Error> for EurekaClientError {
-    fn from(err: hyper::Error) -> EurekaClientError {
+impl From<reqwest::Error> for EurekaClientError {
+    fn from(err: reqwest::Error) -> EurekaClientError {
         ClientError(err)
     }
 }
@@ -47,8 +47,8 @@ impl From<ParserError> for EurekaClientError {
     }
 }
 
-impl From<InvalidUri> for EurekaClientError {
-    fn from(err: InvalidUri) -> EurekaClientError {
+impl From<ParseError> for EurekaClientError {
+    fn from(err: ParseError) -> EurekaClientError {
         InvalidUri(err)
     }
 }

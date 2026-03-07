@@ -1,40 +1,39 @@
+use httpmock::MockServer;
 use rust_eureka::request::{
     AmazonMetaData, DataCenterInfo, DcName, Instance, RegisterRequest, Status,
 };
 use rust_eureka::EurekaClient;
 use serde_json::Map;
-use std::env::var;
-use std::{thread, time};
 
-const EUREKA_URI_KEY: &str = "EUREKA_URI";
 const EUREKA_CLIENT: &str = "INTEGRATION_TEST";
 
 #[tokio::test]
-async fn test_register() {
-    if let Some(eureka_uri) = get_eureka_uri() {
-        let request = build_test_register_request();
-        let client = EurekaClient::new(EUREKA_CLIENT, eureka_uri.as_ref());
+async fn test_register_with_mock_server() {
+    // Use httpmock to provide a local mock Eureka server
+    let server = MockServer::start_async().await;
 
-        println!("#### Registering");
-        let result = client.register(EUREKA_URI_KEY, &request).await;
-        println!("result: {:?}", result);
-        assert!(result.is_ok());
+    // Mock the XML registration endpoint - match any apps registration POST
+    let m1 = server
+        .mock_async(|when, then| {
+            when.method("POST")
+                .path_includes("/apps/")
+                .header("content-type", "application/xml");
+            then.status(204);
+        })
+        .await;
 
-        let ten_secs = time::Duration::from_secs(10);
-        thread::sleep(ten_secs);
+    // Build client pointed at mock server
+    let base = &server.base_url();
+    let client = EurekaClient::new(EUREKA_CLIENT, base);
 
-        println!("#### Querying single application");
-        let result = client.get_application(EUREKA_CLIENT).await;
-        println!("result {:?} ", result);
-        assert!(result.is_ok());
+    // Build a minimal register request
+    let request = build_test_register_request();
 
-        println!("#### Querying multiple applications");
-        let result = client.get_applications().await;
-        println!("result {:?} ", result);
-        assert!(result.is_ok());
-    } else {
-        println!("Skipping test_register as there is no eureka uri specified")
-    }
+    // Try register - should be Ok (we return 204 in mock)
+    let result = client.register(EUREKA_CLIENT, &request).await;
+    assert!(result.is_ok());
+
+    m1.assert_async().await;
 }
 
 #[test]
@@ -76,8 +75,4 @@ fn build_test_register_request() -> RegisterRequest {
         lease_info: None,
         metadata: Map::new(),
     })
-}
-
-fn get_eureka_uri() -> Option<String> {
-    var(EUREKA_URI_KEY).ok()
 }

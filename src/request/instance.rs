@@ -424,7 +424,7 @@ impl<'de> Deserialize<'de> for Instance {
                         }
                         Field::CountryId => {
                             // consume the countryId field, but ignore it for request Instance
-                            let _ : serde_json::Value = map.next_value()?;
+                            let _: serde_json::Value = map.next_value()?;
                         }
                     }
                 }

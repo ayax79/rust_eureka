@@ -479,9 +479,7 @@ impl<'de> Deserialize<'de> for Instance {
                             // countryId may be string or number
                             let v: serde_json::Value = map.next_value()?;
                             let parsed = match v {
-                                serde_json::Value::Number(n) => {
-                                    n.as_u64().map(|x| x as u16)
-                                }
+                                serde_json::Value::Number(n) => n.as_u64().map(|x| x as u16),
                                 serde_json::Value::String(s) => s.parse::<u16>().ok(),
                                 _ => None,
                             };

@@ -95,9 +95,7 @@ impl<'de> Deserialize<'de> for Applications {
                             // servers sometimes return versions__delta as string ("1") or number (1)
                             let val: serde_json::Value = map.next_value()?;
                             let parsed = match val {
-                                serde_json::Value::Number(n) => {
-                                    n.as_i64().map(|i| i as i16)
-                                }
+                                serde_json::Value::Number(n) => n.as_i64().map(|i| i as i16),
                                 serde_json::Value::String(s) => s.parse::<i16>().ok(),
                                 _ => None,
                             };

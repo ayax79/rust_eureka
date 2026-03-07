@@ -1,15 +1,16 @@
 use crate::errors::EurekaClientError;
 use crate::request::RegisterRequest;
 use crate::response::{ApplicationResponse, ApplicationsResponse};
-use hyper::header::{
-    ACCEPT, ACCEPT_CHARSET, ACCEPT_ENCODING, CONTENT_TYPE, USER_AGENT,
+use reqwest::header::{
+    HeaderMap, HeaderValue, ACCEPT, ACCEPT_CHARSET, ACCEPT_ENCODING, CONTENT_TYPE, USER_AGENT,
 };
-use hyper::{body, Body, Client, Method, Request, StatusCode, Uri};
+use reqwest::{Client, StatusCode, Url};
 use serde_json;
+use std::time::Duration;
 
 /// A client for accessing Eureka
 pub struct EurekaClient {
-    client: Client<hyper::client::HttpConnector>,
+    client: Client,
     client_name: String,
     eureka_cluster_url: String,
 }
@@ -29,8 +30,12 @@ impl EurekaClient {
             "Creating new Eureka Client client_name:{:?}, eureka_client:{:?}",
             client_name, eureka_cluster_url
         );
+        let client = Client::builder()
+            .timeout(Duration::from_secs(10))
+            .build()
+            .expect("failed to build reqwest client");
         EurekaClient {
-            client: Client::new(),
+            client,
             client_name: client_name.to_owned(),
             eureka_cluster_url: eureka_cluster_url.to_owned(),
         }
@@ -107,29 +112,25 @@ impl EurekaClient {
 
         // Try XML registration first (Spring Cloud Eureka often expects XML)
         for uri_str in &candidates {
-            let uri: Uri = uri_str
-                .parse::<Uri>()
-                .map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
-            let mut req = Request::builder().method(Method::POST).uri(uri.clone());
-            // request XML (without charset)
-            req = req.header(CONTENT_TYPE, "application/xml");
-
-            let req = req
-                .body(Body::from(xml.clone()))
-                .map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
-
-            let res = match self.client.request(req).await {
+            let url =
+                Url::parse(uri_str).map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
+            let res = match self
+                .client
+                .post(url.clone())
+                .header("content-type", "application/xml")
+                .body(xml.clone())
+                .send()
+                .await
+            {
                 Ok(r) => r,
                 Err(e) => {
-                    last_err = Some(EurekaClientError::ClientError(e));
+                    last_err = Some(EurekaClientError::from(e));
                     continue;
                 }
             };
 
             let status = res.status();
-            let body_bytes = body::to_bytes(res.into_body())
-                .await
-                .map_err(EurekaClientError::ClientError)?;
+            let body_bytes = res.bytes().await.map_err(EurekaClientError::from)?;
             let _body_str = String::from_utf8_lossy(&body_bytes);
 
             if status.is_success() {
@@ -256,29 +257,26 @@ impl EurekaClient {
         let manual_json = serde_json::Value::Object(top).to_string();
 
         for uri_str in &candidates {
-            let uri: Uri = uri_str
-                .parse::<Uri>()
-                .map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
-            let mut req = Request::builder().method(Method::POST).uri(uri.clone());
-            req = self.set_headers(req);
+            let url =
+                Url::parse(uri_str).map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
+            let req_builder = self.client.post(url.clone());
+            // apply headers that the original code used
+            let req_builder = req_builder
+                .header("accept", "application/json")
+                .header("content-type", "application/json;charset=UTF-8")
+                .header("accept-charset", "utf-8")
+                .header("user-agent", format!("Rust Reqwest/{}", self.client_name));
 
-            let req = req
-                .body(Body::from(manual_json.clone()))
-                .map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
-
-            let res = match self.client.request(req).await {
+            let res = match req_builder.body(manual_json.clone()).send().await {
                 Ok(r) => r,
                 Err(e) => {
-                    last_err = Some(EurekaClientError::ClientError(e));
+                    last_err = Some(EurekaClientError::from(e));
                     continue;
                 }
             };
 
-            // read body for debug and potential error messages
             let status = res.status();
-            let body_bytes = body::to_bytes(res.into_body())
-                .await
-                .map_err(EurekaClientError::ClientError)?;
+            let body_bytes = res.bytes().await.map_err(EurekaClientError::from)?;
             let _body_str = String::from_utf8_lossy(&body_bytes);
 
             match status {
@@ -316,38 +314,36 @@ impl EurekaClient {
     ) -> Result<ApplicationResponse, EurekaClientError> {
         let _path = format!("/v2/apps/{}", application_id);
 
-        let uris = self.build_uris(&_path)?;
+        let uris = self.build_uris(&_path)?; // returns Vec<Url>
         let mut last_err: Option<EurekaClientError> = None;
 
-        for uri in uris {
-            let mut req = Request::builder().method(Method::GET).uri(uri.clone());
-
-            req = self.set_headers(req);
-
-            let req = req
+        for url in uris {
+            let headers = self.headers_map();
+            let res = match self
+                .client
+                .get(url.clone())
+                .headers(headers.clone())
                 .header(ACCEPT_ENCODING, "gzip")
-                .body(Body::empty())
-                .map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
-
-            let res = match self.client.request(req).await {
+                .send()
+                .await
+            {
                 Ok(r) => r,
                 Err(e) => {
-                    last_err = Some(EurekaClientError::ClientError(e));
+                    last_err = Some(EurekaClientError::from(e));
                     continue;
                 }
             };
+
             let status = res.status();
 
-            debug!("get_application: server response {:?}", res);
+            debug!("get_application: server response status={:?}", status);
 
             if status == StatusCode::NOT_FOUND {
                 // try next URI
                 continue;
             }
 
-            let body_bytes = body::to_bytes(res.into_body())
-                .await
-                .map_err(EurekaClientError::ClientError)?;
+            let body_bytes = res.bytes().await.map_err(EurekaClientError::from)?;
 
             let app: ApplicationResponse = serde_json::from_slice(&body_bytes)?;
             return Ok(app);
@@ -366,36 +362,33 @@ impl EurekaClient {
         let uris = self.build_uris(path)?;
         let mut last_err: Option<EurekaClientError> = None;
 
-        for uri in uris {
-            debug!("get_applications uri:{}", uri);
+        for url in uris {
+            debug!("get_applications url:{}", url);
 
-            let mut req = Request::builder().method(Method::GET).uri(uri.clone());
-
-            req = self.set_headers(req);
-
-            let req = req
-                .body(Body::empty())
-                .map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
-
-            let res = match self.client.request(req).await {
+            let headers = self.headers_map();
+            let res = match self
+                .client
+                .get(url.clone())
+                .headers(headers.clone())
+                .send()
+                .await
+            {
                 Ok(r) => r,
                 Err(e) => {
-                    last_err = Some(EurekaClientError::ClientError(e));
+                    last_err = Some(EurekaClientError::from(e));
                     continue;
                 }
             };
             let status = res.status();
 
-            debug!("get_applications: server response {:?}", res);
+            debug!("get_applications: server response status={:?}", status);
 
             if status == StatusCode::NOT_FOUND {
                 debug!("received NotFound (404) from server");
                 continue;
             }
 
-            let body_bytes = body::to_bytes(res.into_body())
-                .await
-                .map_err(EurekaClientError::ClientError)?;
+            let body_bytes = res.bytes().await.map_err(EurekaClientError::from)?;
 
             let apps: ApplicationsResponse = serde_json::from_slice(&body_bytes).map_err(|e| {
                 warn!("serde error: {:?}", e);
@@ -413,16 +406,15 @@ impl EurekaClient {
         }
     }
 
-    fn build_uri(&self, path: &str) -> Result<Uri, EurekaClientError> {
+    fn build_uri(&self, path: &str) -> Result<Url, EurekaClientError> {
         let url = format!("{}{}", self.eureka_cluster_url, path);
-        url.parse()
-            .map_err(|e| EurekaClientError::GenericError(format!("Invalid URI: {}", e)))
+        Url::parse(&url).map_err(|e| EurekaClientError::GenericError(format!("Invalid URI: {}", e)))
     }
 
     /// Build a list of candidate URIs to try for a given path.
     /// Some Eureka distributions mount under /eureka, others serve at root. To be robust,
     /// we try both the configured base URL as-is and with a `/eureka` prefix when appropriate.
-    fn build_uris(&self, path: &str) -> Result<Vec<Uri>, EurekaClientError> {
+    fn build_uris(&self, path: &str) -> Result<Vec<Url>, EurekaClientError> {
         let mut uris = Vec::new();
 
         // candidate paths: original and legacy without /v2 prefix
@@ -442,8 +434,8 @@ impl EurekaClient {
             }
             // try with /eureka prefix if not already present in base
             if !self.eureka_cluster_url.ends_with(prefix) {
-                let url = format!("{}{}{}", self.eureka_cluster_url, prefix, p);
-                if let Ok(u) = url.parse() {
+                let path_with_prefix = format!("{}{}", prefix, p);
+                if let Ok(u) = self.build_uri(&path_with_prefix) {
                     if !uris.contains(&u) {
                         uris.push(u);
                     }
@@ -458,13 +450,17 @@ impl EurekaClient {
         Ok(uris)
     }
 
-    fn set_headers(&self, builder: hyper::http::request::Builder) -> hyper::http::request::Builder {
-        let user_agent = format!("Rust Hyper/{}", self.client_name);
-        builder
-            .header(ACCEPT, "application/json")
-            // include charset to match servers that validate charset
-            .header(CONTENT_TYPE, "application/json;charset=UTF-8")
-            .header(ACCEPT_CHARSET, "utf-8")
-            .header(USER_AGENT, user_agent)
+    fn headers_map(&self) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
+        headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_static("application/json;charset=UTF-8"),
+        );
+        headers.insert(ACCEPT_CHARSET, HeaderValue::from_static("utf-8"));
+        let ua = HeaderValue::from_str(&format!("Rust Reqwest/{}", self.client_name))
+            .unwrap_or_else(|_| HeaderValue::from_static("Rust Reqwest"));
+        headers.insert(USER_AGENT, ua);
+        headers
     }
 }
