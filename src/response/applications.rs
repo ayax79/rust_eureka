@@ -92,13 +92,33 @@ impl<'de> Deserialize<'de> for Applications {
                             if versions_delta.is_some() {
                                 return Err(de::Error::duplicate_field("versions__delta"));
                             }
-                            versions_delta = Some(map.next_value()?);
+                            // servers sometimes return versions__delta as string ("1") or number (1)
+                            let val: serde_json::Value = map.next_value()?;
+                            let parsed = match val {
+                                serde_json::Value::Number(n) => {
+                                    n.as_i64().map(|i| i as i16)
+                                }
+                                serde_json::Value::String(s) => s.parse::<i16>().ok(),
+                                _ => None,
+                            };
+                            if let Some(v) = parsed {
+                                versions_delta = Some(v);
+                            } else {
+                                return Err(de::Error::custom("Invalid versions__delta type"));
+                            }
                         }
                         "apps__hashcode" => {
                             if apps_hashcode.is_some() {
                                 return Err(de::Error::duplicate_field("apps__hashcode"));
                             }
-                            apps_hashcode = Some(map.next_value()?);
+                            // sometimes returned as string or number; coerce to string
+                            let val: serde_json::Value = map.next_value()?;
+                            let s = match val {
+                                serde_json::Value::String(s) => s,
+                                serde_json::Value::Number(n) => n.to_string(),
+                                _ => return Err(de::Error::custom("Invalid apps__hashcode type")),
+                            };
+                            apps_hashcode = Some(s);
                         }
                         "application" => {
                             if applications.is_some() {
@@ -194,7 +214,7 @@ pub mod tests {
             apps_hashcode: "UP_1_".to_string(),
             applications: vec![Application {
                 name: "INTEGRATION_TEST".to_string(),
-                instance: Instance {
+                instance: vec![Instance {
                     host_name: "localhost".to_string(),
                     app: "INTEGRATION_TEST".to_string(),
                     ip_addr: "127.0.0.1".to_string(),
@@ -225,7 +245,7 @@ pub mod tests {
                     last_updated_timestamp: 1503701416750,
                     last_dirty_timestamp: 1503701416457,
                     action_type: ActionType::Added,
-                },
+                }],
             }],
         }
     }
@@ -237,7 +257,7 @@ pub mod tests {
         "apps__hashcode": "UP_1_",
         "application": {
             "name": "INTEGRATION_TEST",
-            "instance": {
+            "instance": [{
                 "hostName": "localhost",
                 "app": "INTEGRATION_TEST",
                 "ipAddr": "127.0.0.1",
@@ -275,7 +295,7 @@ pub mod tests {
                 "lastUpdatedTimestamp": 1503701416750,
                 "lastDirtyTimestamp": 1503701416457,
                 "actionType": "ADDED"
-            }
+            }]
         }
         }
         "#
@@ -291,7 +311,7 @@ pub mod tests {
         "apps__hashcode": "UP_1_",
         "application": [{
             "name": "INTEGRATION_TEST",
-            "instance": {
+            "instance": [{
                 "hostName": "localhost",
                 "app": "INTEGRATION_TEST",
                 "ipAddr": "127.0.0.1",
@@ -329,10 +349,10 @@ pub mod tests {
                 "lastUpdatedTimestamp": 1503701416750,
                 "lastDirtyTimestamp": 1503701416457,
                 "actionType": "ADDED"
-            }
+            }]
         }, {
             "name": "INTEGRATION_TEST2",
-            "instance": {
+            "instance": [{
                 "hostName": "localhost",
                 "app": "INTEGRATION_TEST",
                 "ipAddr": "127.0.0.1",
@@ -370,7 +390,7 @@ pub mod tests {
                 "lastUpdatedTimestamp": 1503701416750,
                 "lastDirtyTimestamp": 1503701416457,
                 "actionType": "ADDED"
-            }
+            }]
         }]
         }
         "#

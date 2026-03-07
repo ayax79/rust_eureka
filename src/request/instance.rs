@@ -101,7 +101,9 @@ impl Serialize for Port {
         S: Serializer,
     {
         let mut s = serializer.serialize_struct("Port", 2)?;
+        // serialize "$" as string to match request tests
         s.serialize_field(PORT_DOLLAR, &self.port.to_string())?;
+        // server expects enabled as string
         s.serialize_field(PORT_ENABLED, "true")?;
         s.end()
     }
@@ -222,9 +224,20 @@ impl Serialize for Instance {
             s.serialize_field(LEASE_INFO, lease_info)?;
         }
 
-        if !&self.metadata.is_empty() {
+        // Always include metadata. If empty, send the Java empty map marker some Eureka servers expect.
+        if self.metadata.is_empty() {
+            let mut empty_map = serde_json::Map::new();
+            empty_map.insert(
+                "@class".to_string(),
+                serde_json::Value::String("java.util.Collections$EmptyMap".to_string()),
+            );
+            s.serialize_field(METADATA, &empty_map)?;
+        } else {
             s.serialize_field(METADATA, &self.metadata)?;
         }
+
+        // include a default countryId expected by some servers
+        s.serialize_field(COUNTRY_ID, &1)?;
 
         s.end()
     }
@@ -250,6 +263,7 @@ impl<'de> Deserialize<'de> for Instance {
             DataCenterInfo,
             LeaseInfo,
             Metadata,
+            CountryId,
         }
 
         impl<'de> Deserialize<'de> for Field {
@@ -284,6 +298,7 @@ impl<'de> Deserialize<'de> for Instance {
                             DATA_CENTER_INFO => Ok(Field::DataCenterInfo),
                             LEASE_INFO => Ok(Field::LeaseInfo),
                             METADATA => Ok(Field::Metadata),
+                            COUNTRY_ID => Ok(Field::CountryId),
                             _ => Err(DeError::unknown_field(v, JSON_FIELDS)),
                         }
                     }
@@ -407,6 +422,10 @@ impl<'de> Deserialize<'de> for Instance {
                             }
                             maybe_host_name = Some(map.next_value()?);
                         }
+                        Field::CountryId => {
+                            // consume the countryId field, but ignore it for request Instance
+                            let _ : serde_json::Value = map.next_value()?;
+                        }
                     }
                 }
 
@@ -507,7 +526,8 @@ pub mod tests {
                 "instance-type": "c4xlarged"
            }},
            "leaseInfo": {"evictionDurationInSecs":9600},
-           "metadata": {"something": "somethingelse"}
+           "metadata": {"something": "somethingelse"},
+           "countryId": 1
         }"#
             .to_string()
             .replace(" ", "")

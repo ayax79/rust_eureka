@@ -6,7 +6,6 @@ use serde::de::{Deserialize, Deserializer, Error as DeError, MapAccess, Visitor}
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde_json::{Map, Value};
 use std::fmt;
-use std::str::FromStr;
 
 // Field name constants
 const INSTANCE: &str = "Instance";
@@ -176,16 +175,16 @@ impl<'de> Deserialize<'de> for Port {
             where
                 A: MapAccess<'de>,
             {
-                let mut maybe_dollar: Option<String> = None;
+                let mut maybe_dollar_val: Option<serde_json::Value> = None;
                 let mut maybe_enabled: Option<String> = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::DollarSign => {
-                            if maybe_dollar.is_some() {
+                            if maybe_dollar_val.is_some() {
                                 return Err(DeError::duplicate_field(PORT_DOLLAR));
                             }
-                            maybe_dollar = Some(map.next_value()?);
+                            maybe_dollar_val = Some(map.next_value()?);
                         }
                         Field::Enabled => {
                             if maybe_enabled.is_some() {
@@ -196,12 +195,18 @@ impl<'de> Deserialize<'de> for Port {
                     }
                 }
 
-                let dollar = maybe_dollar
-                    .map(|s| u16::from_str(s.as_ref()).unwrap())
-                    .ok_or_else(|| DeError::missing_field(PORT_DOLLAR))?;
+                let dollar = maybe_dollar_val.ok_or_else(|| DeError::missing_field(PORT_DOLLAR))?;
+
+                // accept "$" as either number or string
+                let dollar_u16 = match dollar {
+                    serde_json::Value::Number(n) => n.as_u64().map(|v| v as u16),
+                    serde_json::Value::String(s) => s.parse::<u16>().ok(),
+                    _ => None,
+                }
+                .ok_or_else(|| DeError::custom("Invalid port value"))?;
+
                 maybe_enabled.ok_or_else(|| DeError::missing_field(PORT_ENABLED))?;
-                // ignore enabled
-                Ok(Port::new(dollar))
+                Ok(Port::new(dollar_u16))
             }
         }
 
@@ -324,6 +329,7 @@ impl<'de> Deserialize<'de> for Instance {
                             LEASE_INFO => Ok(Field::LeaseInfo),
                             METADATA => Ok(Field::Metadata),
                             OVERRIDDENSTATUS => Ok(Field::Overriddenstatus),
+                            "overriddenStatus" => Ok(Field::Overriddenstatus),
                             COUNTRY_ID => Ok(Field::CountryId),
                             LAST_UPDATED_TIMESTAMP => Ok(Field::LastUpdatedTimestamp),
                             LAST_DIRTY_TIMESTAMP => Ok(Field::LastDirtyTimestamp),
@@ -470,19 +476,40 @@ impl<'de> Deserialize<'de> for Instance {
                             if maybe_country_id.is_some() {
                                 return Err(DeError::duplicate_field(COUNTRY_ID));
                             }
-                            maybe_country_id = Some(map.next_value()?);
+                            // countryId may be string or number
+                            let v: serde_json::Value = map.next_value()?;
+                            let parsed = match v {
+                                serde_json::Value::Number(n) => {
+                                    n.as_u64().map(|x| x as u16)
+                                }
+                                serde_json::Value::String(s) => s.parse::<u16>().ok(),
+                                _ => None,
+                            };
+                            maybe_country_id = parsed;
                         }
                         Field::LastUpdatedTimestamp => {
                             if maybe_last_updated_timestamp.is_some() {
                                 return Err(DeError::duplicate_field(LAST_UPDATED_TIMESTAMP));
                             }
-                            maybe_last_updated_timestamp = Some(map.next_value()?);
+                            let v: serde_json::Value = map.next_value()?;
+                            let parsed = match v {
+                                serde_json::Value::Number(n) => n.as_i64(),
+                                serde_json::Value::String(s) => s.parse::<i64>().ok(),
+                                _ => None,
+                            };
+                            maybe_last_updated_timestamp = parsed;
                         }
                         Field::LastDirtyTimestamp => {
                             if maybe_last_dirty_timestamp.is_some() {
                                 return Err(DeError::duplicate_field(LAST_DIRTY_TIMESTAMP));
                             }
-                            maybe_last_dirty_timestamp = Some(map.next_value()?);
+                            let v: serde_json::Value = map.next_value()?;
+                            let parsed = match v {
+                                serde_json::Value::Number(n) => n.as_i64(),
+                                serde_json::Value::String(s) => s.parse::<i64>().ok(),
+                                _ => None,
+                            };
+                            maybe_last_dirty_timestamp = parsed;
                         }
                         Field::IsCoordinatingDiscoveryServer => {
                             if maybe_is_coordinating_discovery_server.is_some() {
@@ -490,7 +517,17 @@ impl<'de> Deserialize<'de> for Instance {
                                     IS_COORDINATED_DISCOVERY_SERVER,
                                 ));
                             }
-                            maybe_is_coordinating_discovery_server = Some(map.next_value()?);
+                            let v: serde_json::Value = map.next_value()?;
+                            let parsed = match v {
+                                serde_json::Value::Bool(b) => Some(b),
+                                serde_json::Value::String(s) => match s.to_lowercase().as_str() {
+                                    "true" => Some(true),
+                                    "false" => Some(false),
+                                    _ => None,
+                                },
+                                _ => None,
+                            };
+                            maybe_is_coordinating_discovery_server = parsed;
                         }
                         Field::ActionType => {
                             if maybe_action_type.is_some() {

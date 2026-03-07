@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Application {
     pub name: String,
-    pub instance: Instance,
+    // server returns instance as an array
+    pub instance: Vec<Instance>,
 }
 
 #[cfg(test)]
@@ -20,7 +21,7 @@ mod tests {
         let name = "test_name";
         let app = Application {
             name: name.to_owned(),
-            instance,
+            instance: vec![instance],
         };
         let result = serde_json::to_string(&app).unwrap();
 
@@ -39,7 +40,7 @@ mod tests {
         let name = "test_name";
         let app = Application {
             name: name.to_owned(),
-            instance,
+            instance: vec![instance],
         };
         let result = serde_json::from_str(&json).unwrap();
         assert_eq!(app, result);
@@ -47,7 +48,7 @@ mod tests {
 
     fn build_register_json() -> String {
         format!(
-            "{{\"name\":\"test_name\",\"instance\":{}}}",
+            "{{\"name\":\"test_name\",\"instance\":[{}]}}",
             build_test_instance_json()
         )
     }

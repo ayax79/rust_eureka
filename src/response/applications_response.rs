@@ -54,7 +54,7 @@ mod tests {
         "apps__hashcode": "UP_1_",
         "application": {
             "name": "INTEGRATION_TEST",
-            "instance": {
+            "instance": [{
                 "hostName": "localhost",
                 "app": "INTEGRATION_TEST",
                 "ipAddr": "127.0.0.1",
@@ -93,7 +93,7 @@ mod tests {
                 "lastUpdatedTimestamp": 1504830481334,
                 "lastDirtyTimestamp": 1504830480933,
                 "actionType": "ADDED"
-            }
+            }]
         }
     }
 }"#

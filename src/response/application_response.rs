@@ -24,7 +24,7 @@ mod tests {
         let instance = build_test_instance();
         let application: Application = Application {
             name: "test_app".to_owned(),
-            instance,
+            instance: vec![instance],
         };
         let ar = ApplicationResponse::new(application);
         let result = serde_json::to_string(&ar).unwrap();
@@ -43,7 +43,7 @@ mod tests {
         let instance = build_test_instance();
         let application: Application = Application {
             name: "test_app".to_owned(),
-            instance,
+            instance: vec![instance],
         };
         let ar = ApplicationResponse::new(application);
         let result = serde_json::from_str(&json).unwrap();
@@ -52,7 +52,7 @@ mod tests {
 
     fn build_application_response_json() -> String {
         format!(
-            "{{\"application\":{{\"name\":\"test_app\",\"instance\":{}}}}}",
+            "{{\"application\":{{\"name\":\"test_app\",\"instance\":[{}]}}}}",
             build_test_instance_json()
         )
     }
