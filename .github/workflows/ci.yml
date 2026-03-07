@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    name: Rust CI
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust: [stable]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+
+      - name: Install rustfmt and clippy
+        run: |
+          rustup component add rustfmt --toolchain ${{ matrix.rust }} || true
+          rustup component add clippy --toolchain ${{ matrix.rust }} || true
+
+      - name: Ensure cargo is up-to-date
+        run: cargo --version
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy (deny warnings)
+        env:
+          RUSTFLAGS: "-D warnings"
+        run: |
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Build (release)
+        run: cargo build --workspace --all-features --release
+
+      - name: Run tests
+        run: cargo test --workspace --all-features --no-fail-fast
+
+      - name: Build docs
+        run: cargo doc --no-deps --all-features
+
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: target/doc

@@ -1,18 +1,18 @@
 # rust_eureka
 
-[![Travis Build Status](https://travis-ci.org/ayax79/rust_eureka.svg?branch=master)](https://travis-ci.org/ayax79/rust_eureka)
+[![CI](https://github.com/ayax79/rust_eureka/actions/workflows/ci.yml/badge.svg)](https://github.com/ayax79/rust_eureka/actions/workflows/ci.yml)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 A Rust implementation of a client for Netflix [Eureka](https://github.com/Netflix/eureka)
 
 ## Features
 
-- ✅ Service registration
-- ✅ Application discovery (single and all)
-- ✅ Async/await with Tokio
-- ✅ Full JSON serialization/deserialization
-- ✅ Type-safe API
-- ✅ Comprehensive error handling
+- Service registration
+- Application discovery (single and all)
+- Async/await with Tokio
+- Full JSON serialization/deserialization
+- Type-safe API
+- Comprehensive error handling
 
 ## Installation
 
