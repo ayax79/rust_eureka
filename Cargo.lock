@@ -1293,7 +1293,6 @@ dependencies = [
  "pin-project-lite",
  "quinn",
  "rustls",
- "rustls-native-certs",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
@@ -1327,7 +1326,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-eureka"
+name = "rust_eureka"
 version = "0.2.0"
 dependencies = [
  "futures",

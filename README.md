@@ -2,7 +2,8 @@
 
 <!-- markdownlint-disable line-length --->
 
-[![CI](https://github.com/ayax79/rust_eureka/actions/workflows/ci.yml/badge.svg)](https://github.com/ayax79/rust_eureka/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/rust_eureka.svg)](https://crates.io/crates/rust_eureka)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ayax79/rust_eureka/ci.yml?branch=main)](https://github.com/ayax79/rust_eureka/actions)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 A Rust implementation of a client for Netflix

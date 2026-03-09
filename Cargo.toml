@@ -1,5 +1,5 @@
 [package]
-name = "rust-eureka"
+name = "rust_eureka"
 version = "0.2.0"
 authors = ["Jack Wright <ayax79@gmail.com>"]
 description = "Simple Netflix Eureka Client"
@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3"
-reqwest = { version = "0.13", features = ["json", "gzip", "stream", "rustls-native-certs"] }
+reqwest = { version = "0.13", features = ["json", "gzip", "stream", "rustls"] }
 tokio = { version = "1", features = ["full"] }
 url = "2.5"
 log = "0.4"
