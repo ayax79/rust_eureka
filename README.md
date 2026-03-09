@@ -24,7 +24,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rust-eureka = "0.1"
+rust_eureka = "0.1"
 ```
 
 ## Usage
