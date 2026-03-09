@@ -308,6 +308,87 @@ impl EurekaClient {
         }
     }
 
+    pub async fn deregister(
+        &self,
+        application_id: &str,
+        instance_id: &str,
+    ) -> Result<(), EurekaClientError> {
+        // Build base path for application: /v2/apps/{app}
+        let base_path = format!("/v2/apps/{}", application_id);
+
+        let app_uris = self.build_uris(&base_path)?; // returns Vec<Url> pointing to .../apps/{app}
+        let mut last_err: Option<EurekaClientError> = None;
+        let mut saw_bad_request = false;
+        let mut saw_internal_server_error = false;
+
+        for app_url in app_uris {
+            // Attempt to append the instance_id as a path segment using Url::join which will
+            // percent-encode characters like ':' appropriately.
+            // Build the delete URL by appending the instance_id as a path segment.
+            // Use path_segments_mut to ensure proper percent-encoding of characters like ':'.
+            let mut delete_url = app_url.clone();
+            match delete_url.path_segments_mut() {
+                Ok(mut segments) => {
+                    segments.push(instance_id);
+                }
+                Err(e) => {
+                    last_err = Some(EurekaClientError::GenericError(format!(
+                        "Failed to append instance id to URL {e:?}"
+                    )));
+                    continue;
+                }
+            }
+
+            let headers = self.headers_map();
+            let res = match self
+                .client
+                .delete(delete_url.clone())
+                .headers(headers.clone())
+                .send()
+                .await
+            {
+                Ok(r) => r,
+                Err(e) => {
+                    last_err = Some(EurekaClientError::from(e));
+                    continue;
+                }
+            };
+
+            let status = res.status();
+
+            debug!(
+                "deregister: server response status={:?} for url={} ",
+                status, delete_url
+            );
+
+            if status.is_success() {
+                return Ok(());
+            }
+
+            if status == StatusCode::BAD_REQUEST {
+                saw_bad_request = true;
+                continue;
+            } else if status == StatusCode::INTERNAL_SERVER_ERROR {
+                saw_internal_server_error = true;
+                continue;
+            } else if status == StatusCode::NOT_FOUND {
+                // try next URI
+                continue;
+            }
+        }
+
+        // If we exhausted URIs decide which error to return
+        if let Some(e) = last_err {
+            Err(e)
+        } else if saw_internal_server_error {
+            Err(EurekaClientError::InternalServerError)
+        } else if saw_bad_request {
+            Err(EurekaClientError::BadRequest)
+        } else {
+            Err(EurekaClientError::NotFound)
+        }
+    }
+
     pub async fn get_application(
         &self,
         application_id: &str,
