@@ -179,9 +179,9 @@ impl<'de> Deserialize<'de> for Port {
                     }
                 }
 
-                let dollar = maybe_dollar
-                    .map(|s| u16::from_str(s.as_ref()).unwrap())
-                    .ok_or_else(|| DeError::missing_field(PORT_DOLLAR))?;
+                let dollar_str = maybe_dollar.ok_or_else(|| DeError::missing_field(PORT_DOLLAR))?;
+                let dollar = u16::from_str(dollar_str.as_ref())
+                    .map_err(|_| DeError::custom(format!("invalid port: {}", dollar_str)))?;
                 maybe_enabled.ok_or_else(|| DeError::missing_field(PORT_ENABLED))?;
                 // ignore enabled
                 Ok(Port::new(dollar))

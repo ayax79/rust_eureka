@@ -25,7 +25,10 @@ impl EurekaClient {
     ///
     /// * `client_name` - The name of this client
     /// * `eureka_cluster_url` - The base url to the eureka cluster
-    pub fn new(client_name: &str, eureka_cluster_url: &str) -> EurekaClient {
+    pub fn new(
+        client_name: &str,
+        eureka_cluster_url: &str,
+    ) -> Result<EurekaClient, EurekaClientError> {
         debug!(
             "Creating new Eureka Client client_name:{:?}, eureka_client:{:?}",
             client_name, eureka_cluster_url
@@ -33,12 +36,12 @@ impl EurekaClient {
         let client = Client::builder()
             .timeout(Duration::from_secs(10))
             .build()
-            .expect("failed to build reqwest client");
-        EurekaClient {
+            .map_err(EurekaClientError::from)?;
+        Ok(EurekaClient {
             client,
             client_name: client_name.to_owned(),
             eureka_cluster_url: eureka_cluster_url.to_owned(),
-        }
+        })
     }
 
     pub async fn register(
@@ -112,8 +115,7 @@ impl EurekaClient {
 
         // Try XML registration first (Spring Cloud Eureka often expects XML)
         for uri_str in &candidates {
-            let url =
-                Url::parse(uri_str).map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
+            let url = Url::parse(uri_str).map_err(EurekaClientError::from)?;
             let res = match self
                 .client
                 .post(url.clone())
@@ -257,8 +259,7 @@ impl EurekaClient {
         let manual_json = serde_json::Value::Object(top).to_string();
 
         for uri_str in &candidates {
-            let url =
-                Url::parse(uri_str).map_err(|e| EurekaClientError::GenericError(e.to_string()))?;
+            let url = Url::parse(uri_str).map_err(EurekaClientError::from)?;
             let req_builder = self.client.post(url.clone());
             // apply headers that the original code used
             let req_builder = req_builder
@@ -489,7 +490,7 @@ impl EurekaClient {
 
     fn build_uri(&self, path: &str) -> Result<Url, EurekaClientError> {
         let url = format!("{}{}", self.eureka_cluster_url, path);
-        Url::parse(&url).map_err(|e| EurekaClientError::GenericError(format!("Invalid URI: {}", e)))
+        Url::parse(&url).map_err(EurekaClientError::from)
     }
 
     /// Build a list of candidate URIs to try for a given path.

@@ -24,7 +24,7 @@ async fn test_register_with_mock_server() {
 
     // Build client pointed at mock server
     let base = &server.base_url();
-    let client = EurekaClient::new(EUREKA_CLIENT, base);
+    let client = EurekaClient::new(EUREKA_CLIENT, base).unwrap();
 
     // Build a minimal register request
     let request = build_test_register_request();
