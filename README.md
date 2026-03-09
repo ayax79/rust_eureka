@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable line-length --->
 
-[![Crates.io](https://img.shields.io/crates/v/rust_eureka.svg)](https://crates.io/crates/rust_eureka)
+[![Crates.io](https://img.shields.io/crates/v/rust-eureka.svg)](https://crates.io/crates/rust-eureka)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/ayax79/rust_eureka/ci.yml?branch=main)](https://github.com/ayax79/rust_eureka/actions)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
@@ -24,7 +24,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rust_eureka = "0.2"
+rust-eureka = "0.2"
 ```
 
 ## Usage
