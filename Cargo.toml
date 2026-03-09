@@ -1,5 +1,5 @@
 [package]
-name = "rust_eureka"
+name = "rust-eureka"
 version = "0.2.0"
 authors = ["Jack Wright <ayax79@gmail.com>"]
 description = "Simple Netflix Eureka Client"

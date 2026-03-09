@@ -1326,7 +1326,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_eureka"
+name = "rust-eureka"
 version = "0.2.0"
 dependencies = [
  "futures",
