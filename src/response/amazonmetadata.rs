@@ -38,7 +38,7 @@ pub mod tests {
         };
         let json = sample_meta_data();
 
-        let result = serde_json::to_string(&md).unwrap();
+        let result = serde_json::to_string(&md).expect("serialization should succeed");
         assert_eq!(json, result);
     }
 
@@ -58,7 +58,7 @@ pub mod tests {
             instance_type: "c4xlarged".to_string(),
         };
         let json = sample_meta_data();
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("deserialization should succeed");
         assert_eq!(md, result);
     }
 

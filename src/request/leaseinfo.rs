@@ -106,7 +106,7 @@ mod test {
             eviction_duration_in_secs: Some(9600),
         };
         let json = r#"{"evictionDurationInSecs":9600}"#;
-        let result = serde_json::to_string(&li).unwrap();
+        let result = serde_json::to_string(&li).expect("serialization should succeed");
         assert_eq!(json, result);
     }
 
@@ -116,7 +116,7 @@ mod test {
             eviction_duration_in_secs: None,
         };
         let json = r#"{"evictionDurationInSecs":90}"#;
-        let result = serde_json::to_string(&li).unwrap();
+        let result = serde_json::to_string(&li).expect("serialization should succeed");
         assert_eq!(json, result);
     }
 
@@ -126,7 +126,7 @@ mod test {
             eviction_duration_in_secs: Some(90),
         };
         let json = r#"{"evictionDurationInSecs":90}"#;
-        let result = serde_json::from_str(json).unwrap();
+        let result = serde_json::from_str(json).expect("deserialization should succeed");
         assert_eq!(li, result);
     }
 }

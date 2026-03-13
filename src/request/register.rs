@@ -109,7 +109,7 @@ mod tests {
         let json = build_register_json();
         let instance = build_test_instance();
         let rr = RegisterRequest::new(instance);
-        let result = serde_json::to_string(&rr).unwrap();
+        let result = serde_json::to_string(&rr).expect("serialization should succeed");
 
         //                let combined = json.chars().zip(result.chars());
         //                for (a, b) in combined {
@@ -124,7 +124,7 @@ mod tests {
         let json = build_register_json();
         let instance = build_test_instance();
         let rr = RegisterRequest::new(instance);
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("deserialization should succeed");
         assert_eq!(rr, result);
     }
 

@@ -146,7 +146,7 @@ pub mod test {
             }),
         };
         let json = sample_data_center();
-        let result = serde_json::to_string(&dci).unwrap();
+        let result = serde_json::to_string(&dci).expect("serialization should succeed");
         assert_eq!(json, result);
     }
 
@@ -170,7 +170,7 @@ pub mod test {
         };
         let json = sample_data_center();
         println!("json {}", json);
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("deserialization should succeed");
         assert_eq!(dci, result);
     }
 

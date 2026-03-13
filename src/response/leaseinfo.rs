@@ -20,7 +20,7 @@ mod tests {
     fn test_serialize() {
         let li = build_lease_info();
         let json = build_lease_info_json();
-        let result = serde_json::to_string(&li).unwrap();
+        let result = serde_json::to_string(&li).expect("test unwrap");
         assert_eq!(json, result);
     }
 
@@ -28,7 +28,7 @@ mod tests {
     fn test_deserialize() {
         let li = build_lease_info();
         let json = build_lease_info_json();
-        let result = serde_json::from_str(json.as_ref()).unwrap();
+        let result = serde_json::from_str(json.as_ref()).expect("test unwrap");
         assert_eq!(li, result);
     }
 

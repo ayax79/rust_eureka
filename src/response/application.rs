@@ -23,7 +23,7 @@ mod tests {
             name: name.to_owned(),
             instance: vec![instance],
         };
-        let result = serde_json::to_string(&app).unwrap();
+        let result = serde_json::to_string(&app).expect("serialization should succeed");
 
         //                let combined = json.chars().zip(result.chars());
         //                for (a, b) in combined {
@@ -42,7 +42,7 @@ mod tests {
             name: name.to_owned(),
             instance: vec![instance],
         };
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("deserialization should succeed");
         assert_eq!(app, result);
     }
 

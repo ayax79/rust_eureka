@@ -88,7 +88,8 @@ async fn test_eureka_connectivity() {
     let eureka_uri = get_eureka_uri();
     println!("Testing connectivity to Eureka at: {}", eureka_uri);
 
-    let client = EurekaClient::new("CONNECTIVITY_TEST", &eureka_uri).unwrap();
+    let client = EurekaClient::new("CONNECTIVITY_TEST", &eureka_uri)
+        .expect("Eureka client should initialize");
 
     // Try to get applications - even if empty, this verifies server is reachable
     let result = client.get_applications().await;
@@ -120,7 +121,8 @@ async fn test_register_instance() {
     let app_name = create_test_app_name("register");
     println!("Testing registration with app: {}", app_name);
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
     let instance = build_test_instance(&app_name, Some(8081));
     let request = RegisterRequest::new(instance);
 
@@ -144,7 +146,7 @@ async fn test_register_instance() {
         app_result.err()
     );
 
-    let app = app_result.unwrap();
+    let app = app_result.expect("get application should succeed");
     assert_eq!(app.application.name, app_name, "Application name mismatch");
     println!("✓ Verified instance is registered");
 }
@@ -157,7 +159,8 @@ async fn test_get_application() {
     let app_name = create_test_app_name("get_app");
     println!("Testing get application: {}", app_name);
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
     let instance = build_test_instance(&app_name, Some(8082));
     let request = RegisterRequest::new(instance);
 
@@ -173,7 +176,7 @@ async fn test_get_application() {
     let result = client.get_application(&app_name).await;
     assert!(result.is_ok(), "Failed to get application: {:?}", result);
 
-    let app_response = result.unwrap();
+    let app_response = result.expect("get application should succeed");
     assert_eq!(app_response.application.name, app_name);
     println!("✓ Successfully retrieved application");
 }
@@ -186,7 +189,8 @@ async fn test_get_all_applications() {
     let app_name = create_test_app_name("get_all");
     println!("Testing get all applications");
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
     let instance = build_test_instance(&app_name, Some(8083));
     let request = RegisterRequest::new(instance);
 
@@ -206,7 +210,7 @@ async fn test_get_all_applications() {
         result.err()
     );
 
-    let apps_response = result.unwrap();
+    let apps_response = result.expect("get applications should succeed");
     let apps = &apps_response.applications.applications;
 
     println!("✓ Found {} applications", apps.len());
@@ -229,7 +233,7 @@ async fn test_get_nonexistent_application() {
     let app_name = "NONEXISTENT_APP_12345";
     println!("Testing get non-existent application: {}", app_name);
 
-    let client = EurekaClient::new(app_name, &eureka_uri).unwrap();
+    let client = EurekaClient::new(app_name, &eureka_uri).expect("Eureka client should initialize");
 
     let result = client.get_application(app_name).await;
     assert!(
@@ -259,7 +263,8 @@ async fn test_register_multiple_instances() {
     println!("Testing multiple instance registration: {}", app_name);
 
     // Register first instance
-    let client1 = EurekaClient::new(&format!("{}-1", app_name), &eureka_uri).unwrap();
+    let client1 = EurekaClient::new(&format!("{}-1", app_name), &eureka_uri)
+        .expect("Eureka client should initialize");
     let instance1 = build_test_instance(&app_name, Some(8084));
     let request1 = RegisterRequest::new(instance1);
     client1
@@ -268,7 +273,8 @@ async fn test_register_multiple_instances() {
         .expect("Failed to register first instance");
 
     // Register second instance
-    let client2 = EurekaClient::new(&format!("{}-2", app_name), &eureka_uri).unwrap();
+    let client2 = EurekaClient::new(&format!("{}-2", app_name), &eureka_uri)
+        .expect("Eureka client should initialize");
     let instance2 = build_test_instance(&app_name, Some(8085));
     let request2 = RegisterRequest::new(instance2);
     client2
@@ -293,7 +299,8 @@ async fn test_different_status_values() {
     let app_name = create_test_app_name("status");
     println!("Testing different status values");
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
 
     // Test with Status::Starting
     let mut instance = build_test_instance(&app_name, Some(8086));
@@ -333,7 +340,8 @@ async fn test_deregister_instance() {
     let app_name = create_test_app_name("deregister");
     println!("Testing deregister lifecycle for app: {}", app_name);
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
     let instance = build_test_instance(&app_name, Some(8090));
     let request = RegisterRequest::new(instance);
 
@@ -414,7 +422,8 @@ async fn test_full_lifecycle() {
     println!("App name: {}", app_name);
     println!("Eureka URI: {}", eureka_uri);
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
 
     // 1. Register instance
     println!("\n1. Registering instance...");
@@ -440,7 +449,7 @@ async fn test_full_lifecycle() {
         "Failed to get application: {:?}",
         app_result.err()
     );
-    let app = app_result.unwrap();
+    let app = app_result.expect("get application should succeed");
     println!("   ✓ Found application: {}", app.application.name);
 
     // 4. Verify in all apps query
@@ -451,7 +460,7 @@ async fn test_full_lifecycle() {
         "Failed to get applications: {:?}",
         apps_result.err()
     );
-    let apps = apps_result.unwrap();
+    let apps = apps_result.expect("get applications should succeed");
     println!(
         "   ✓ Found {} total applications",
         apps.applications.applications.len()
@@ -481,7 +490,8 @@ async fn test_full_applications() {
     println!("App name: {}", app_name);
     println!("Eureka URI: {}", eureka_uri);
 
-    let client = EurekaClient::new(&app_name, &eureka_uri).unwrap();
+    let client =
+        EurekaClient::new(&app_name, &eureka_uri).expect("Eureka client should initialize");
 
     // 1. Register instance
     println!("\n1. Registering instance...");
@@ -507,7 +517,7 @@ async fn test_full_applications() {
         "Failed to get application: {:?}",
         app_result.err()
     );
-    let app = app_result.unwrap();
+    let app = app_result.expect("get application should succeed");
     println!("   ✓ Found application: {}", app.application.name);
 
     // 4. Verify in all apps query
@@ -518,7 +528,7 @@ async fn test_full_applications() {
         "Failed to get applications: {:?}",
         apps_result.err()
     );
-    let apps = apps_result.unwrap();
+    let apps = apps_result.expect("get applications should succeed");
     println!(
         "   ✓ Found {} total applications",
         apps.applications.applications.len()

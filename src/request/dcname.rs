@@ -122,14 +122,20 @@ mod test {
 
     #[test]
     fn test_from_str() {
-        assert_eq!(DcName::Amazon, DcName::from_str(AMAZON).unwrap());
-        assert_eq!(DcName::MyOwn, DcName::from_str(MY_OWN).unwrap());
+        assert_eq!(
+            DcName::Amazon,
+            DcName::from_str(AMAZON).expect("should parse Amazon")
+        );
+        assert_eq!(
+            DcName::MyOwn,
+            DcName::from_str(MY_OWN).expect("should parse MyOwn")
+        );
     }
 
     #[test]
     #[should_panic]
     fn test_from_str_invalid() {
-        DcName::from_str("sfd2ef").unwrap();
+        DcName::from_str("sfd2ef").expect("should panic on invalid DcName");
     }
 
     #[test]

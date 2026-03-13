@@ -24,7 +24,7 @@ mod tests {
     fn test_applications_response_serialization() {
         let applications = build_test_applications();
         let ar = ApplicationsResponse::new(applications);
-        let result = serde_json::to_string(&ar).unwrap();
+        let result = serde_json::to_string(&ar).expect("serialization should succeed");
         assert!(result.contains("{\"applications\":"))
     }
 
@@ -33,7 +33,7 @@ mod tests {
         let json = build_applications_response_json();
         let applications = build_test_applications();
         let ar = ApplicationsResponse::new(applications);
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("deserialization should succeed");
         assert_eq!(ar, result);
     }
 

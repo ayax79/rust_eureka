@@ -24,7 +24,7 @@ async fn test_register_with_mock_server() {
 
     // Build client pointed at mock server
     let base = &server.base_url();
-    let client = EurekaClient::new(EUREKA_CLIENT, base).unwrap();
+    let client = EurekaClient::new(EUREKA_CLIENT, base).expect("client should be created");
 
     // Build a minimal register request
     let request = build_test_register_request();
@@ -40,7 +40,7 @@ async fn test_register_with_mock_server() {
 fn output_json() {
     let request = build_test_register_request();
     let json = serde_json::to_string(&request);
-    println!("{:?}", json.unwrap());
+    println!("{:?}", json.expect("serialization should succeed"));
 }
 
 fn build_test_register_request() -> RegisterRequest {

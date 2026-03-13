@@ -129,18 +129,18 @@ mod test {
 
     #[test]
     fn test_from_str() {
-        assert_eq!(ActionType::Added, ActionType::from_str(ADDED).unwrap());
-        assert_eq!(ActionType::Deleted, ActionType::from_str(DELETED).unwrap());
+        assert_eq!(ActionType::Added, ActionType::from_str(ADDED).expect("deserialization should succeed"));
+        assert_eq!(ActionType::Deleted, ActionType::from_str(DELETED).expect("test unwrap"));
         assert_eq!(
             ActionType::Modified,
-            ActionType::from_str(MODIFIED).unwrap()
+            ActionType::from_str(MODIFIED).expect("deserialization should succeed")
         );
     }
 
     #[test]
     #[should_panic]
     fn test_from_str_invalid() {
-        ActionType::from_str("sfd2ef").unwrap();
+        ActionType::from_str("sfd2ef").expect("should panic on invalid ActionType");
     }
 
     #[test]

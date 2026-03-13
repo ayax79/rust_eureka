@@ -607,7 +607,7 @@ pub mod tests {
     fn test_instance_serialization() {
         let json = build_test_instance_json();
         let instance = build_test_instance();
-        let result = serde_json::to_string(&instance).unwrap();
+        let result = serde_json::to_string(&instance).expect("serialization should succeed");
 
         //        let combined = json.chars().zip(result.chars());
         //        for (a, b) in combined {
@@ -621,7 +621,7 @@ pub mod tests {
     fn test_instance_deserialization() {
         let json = build_test_instance_json();
         let instance = build_test_instance();
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("deserialization should succeed");
         assert_eq!(instance, result);
     }
 
@@ -769,7 +769,7 @@ pub mod tests {
             "actionType": "ADDED"
         }"#;
 
-        let instance: Instance = serde_json::from_str(json).unwrap();
+        let instance: Instance = serde_json::from_str(json).expect("deserialization should succeed");
         assert_eq!(0, instance.metadata.len());
     }
 }

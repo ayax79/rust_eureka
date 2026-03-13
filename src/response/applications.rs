@@ -185,7 +185,7 @@ pub mod tests {
     #[test]
     fn test_applications_serialize() {
         let applications = build_test_applications();
-        let result = serde_json::to_string(&applications).unwrap();
+        let result = serde_json::to_string(&applications).expect("serialization should succeed");
         assert!(result.contains("\"apps__hashcode\":\"UP_1_\""));
         assert!(result.contains("\"name\":\"INTEGRATION_TEST\""));
     }
@@ -194,7 +194,7 @@ pub mod tests {
     fn test_applications_deserialize() {
         let json = build_test_applications_json();
         let applications = build_test_applications();
-        let result = serde_json::from_str(json.as_ref()).unwrap();
+        let result = serde_json::from_str(json.as_ref()).expect("deserialization should succeed");
 
         assert_eq!(applications, result)
     }
@@ -202,7 +202,7 @@ pub mod tests {
     #[test]
     fn test_applications_multi_deserialize() {
         let json = build_test_multi_applications_json();
-        let result: Applications = serde_json::from_str(json.as_ref()).unwrap();
+        let result: Applications = serde_json::from_str(json.as_ref()).expect("deserialization should succeed");
         assert_eq!(2, result.applications.len())
     }
 

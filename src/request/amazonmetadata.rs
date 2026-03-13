@@ -292,7 +292,7 @@ pub mod test {
         };
         let json = sample_meta_data();
 
-        let result = serde_json::to_string(&md).unwrap();
+        let result = serde_json::to_string(&md).expect("faile to serialize AmazonMetaData");
         assert_eq!(json, result);
     }
 
@@ -312,7 +312,7 @@ pub mod test {
             instance_type: "c4xlarged".to_string(),
         };
         let json = sample_meta_data();
-        let result = serde_json::from_str(&json).unwrap();
+        let result = serde_json::from_str(&json).expect("failed to deserialize AmazonMetaData");
         assert_eq!(md, result);
     }
 
